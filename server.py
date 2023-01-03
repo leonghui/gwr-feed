@@ -1,5 +1,4 @@
 from flask import Flask, abort, jsonify, request
-from flask.logging import create_logger
 from requests_cache import CachedSession
 
 from gwr_feed import get_item_listing
@@ -17,7 +16,7 @@ config = FeedConfig(
         stale_if_error=True,
         cache_control=True,
         backend='memory'),
-    logger=create_logger(app),
+    logger=app.logger,
     headers=request_headers
 )
 
