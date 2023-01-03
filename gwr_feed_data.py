@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from logging import Logger
 
 from requests_cache import CachedSession
@@ -19,10 +19,6 @@ request_headers = {
     'Accept-Encoding': 'gzip, deflate, br',
     'Content-Type': 'application/json',
 }
-
-
-def ceil_dt(dt, delta):
-    return dt + (datetime.min - dt) % delta
 
 
 @dataclass()
@@ -75,8 +71,8 @@ class _BaseQuery:
         self.journey = self.from_code.upper() + '>' + self.to_code.upper()
 
     def init_timestamp(self):
-        self.timestamp = ceil_dt(datetime.strptime(
-            self.date_str + ' ' + self.time_str, "%Y%m%d %H%M"), timedelta(minutes=30))
+        self.timestamp = datetime.strptime(
+            self.date_str + ' ' + self.time_str, "%Y%m%d %H%M")
 
     def init_weeks_ahead(self):
         if self.weeks_ahead_str:
