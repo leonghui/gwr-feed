@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 from logging import Logger
 
 from requests_cache import CachedSession
@@ -7,21 +7,22 @@ from requests_cache import CachedSession
 from gwr_location import get_station_id
 
 
-CURRENCY_CODE = 'GBP'
-DEFAULT_COUNTRY = 'GB'
-DEFAULT_LANGUAGE = 'en-GB'
-GWR_DOMAIN = 'www.gwr.com'
-GWR_URL = 'https://' + GWR_DOMAIN
-LOCATIONS_SEARCH_URI = '/api/locations-search/v1/search?'
-JOURNEY_SEARCH_URI = '/api/journey-search/'
+CURRENCY_CODE = '£'
+GWR_DOMAIN = 'gwr.com'
+GWR_API_URL = 'https://api.' + GWR_DOMAIN
+GWR_BASE_URL = 'https://www.' + GWR_DOMAIN
+LOCATIONS_SEARCH_URI = '/rail/locations'
+JOURNEY_SEARCH_URI = '/rail/journeys/search'
+BASKET_URI = '/customer/basket'
 
 request_headers = {
-    'Accept': 'application/json',
     'Accept-Encoding': 'gzip, deflate, br',
-    'Accept-Language': DEFAULT_LANGUAGE,
-    'Content-Type': 'text/plain;charset=UTF-8',
-
+    'Content-Type': 'application/json',
 }
+
+
+def ceil_dt(dt, delta):
+    return dt + (datetime.min - dt) % delta
 
 
 @dataclass()
@@ -29,12 +30,13 @@ class FeedConfig():
     session: CachedSession
     logger: Logger
     useragent: str = ''
-    newrelic_version: str = ''
-    country: str = DEFAULT_COUNTRY
-    url: str = GWR_URL
+    session_token: str = ''
+    url: str = GWR_API_URL
+    base_url: str = GWR_BASE_URL
     domain: str = GWR_DOMAIN
     locations_uri: str = LOCATIONS_SEARCH_URI
     journey_uri: str = JOURNEY_SEARCH_URI
+    basket_uri: str = BASKET_URI
     currency: str = CURRENCY_CODE
     headers: dict = field(default_factory=dict)
 
@@ -59,7 +61,7 @@ class _BaseQuery:
     journey: str = ''
     time_str: str = datetime.now().strftime("%H%M")
     date_str: str = datetime.now().strftime("%Y%m%d")
-    timestamp: datetime = datetime.now()
+    timestamp: datetime = None
     weeks_ahead_str: str = '0'
     weeks_ahead: int = 0
 
@@ -74,8 +76,8 @@ class _BaseQuery:
         self.journey = self.from_code.upper() + '>' + self.to_code.upper()
 
     def init_timestamp(self):
-        self.timestamp = datetime.strptime(
-            self.date_str + ' ' + self.time_str, "%Y%m%d %H%M")
+        self.timestamp = ceil_dt(datetime.strptime(
+            self.date_str + ' ' + self.time_str, "%Y%m%d %H%M"), timedelta(minutes=30))
 
     def init_weeks_ahead(self):
         if self.weeks_ahead_str:

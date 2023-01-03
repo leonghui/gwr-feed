@@ -5,14 +5,7 @@ def get_station_id(station_code, config):
 
     base_url = config.url + config.locations_uri
 
-    query_dict = {
-        'searchTerm': station_code,
-        'size': 1,
-        'locationType': 'station',
-        'country': config.country
-    }
-
-    search_url = base_url + urlencode(query_dict)
+    search_url = base_url
 
     config.logger.debug(
         f"Querying endpoint: {search_url}")
@@ -23,10 +16,12 @@ def get_station_id(station_code, config):
         location_dict = location_response.json()
         config.logger.debug(f'Response cached: {location_response.from_cache}')
 
-        locations = location_dict['requestedCountry']
+        locations = location_dict['data']
 
         if locations:
-            return locations[0]['id']
+            return [
+                location['nlc'] for location in locations
+                if location['code'] == station_code.upper()][0]
         else:
             config.logger.error(f'Invalid station code: {station_code}')
     else:

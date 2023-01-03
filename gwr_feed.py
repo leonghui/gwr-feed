@@ -8,6 +8,7 @@ from json_feed_data import JSONFEED_VERSION_URL, JsonFeedItem, JsonFeedTopLevel
 
 def reset_query_session(query):
     query.config.useragent = None
+    query.config.session_token = None
     query.config.session.cookies.clear()
 
 
@@ -17,7 +18,7 @@ def get_response_dict(url, query, body):
     session = config.session
 
     config.headers['User-Agent'] = config.useragent
-    config.headers['x-version'] = config.newrelic_version
+    config.headers['Session-Token'] = config.session_token
     session.headers = config.headers
 
     logger.debug(
@@ -31,15 +32,19 @@ def get_response_dict(url, query, body):
 
     # return HTTP error code
     if not response.ok:
-        if response.text.find('captcha'):
-            bot_msg = f"{query.journey} - bot detected, resetting session"
+        if response.status_code == 401:
+            unauth_msg = f"{query.journey} - invalid token, resetting session"
 
-            logger.error(bot_msg)
+            logger.error(unauth_msg)
             reset_query_session(query)
 
-            abort(503, bot_msg)
-        else:
+            abort(response.status_code, unauth_msg)
+        elif response.json():
             logger.error(f"{query.journey} - error from source")
+            error_msg = f"{query.journey} - {response.json().get('errors')}"
+            abort(response.status_code, error_msg)
+        else:
+            logger.error(f"{query.journey} - raw error from source")
             logger.debug(
                 f"{query.journey} - dumping input: {response.text}")
         return None
@@ -58,7 +63,7 @@ def get_top_level_feed(query, feed_items):
 
     title_strings = [query.config.domain, query.journey]
 
-    base_url = query.config.url
+    base_url = query.config.base_url
 
     json_feed = JsonFeedTopLevel(
         version=JSONFEED_VERSION_URL,
@@ -80,7 +85,7 @@ def generate_items(query, result_dict):
 
     iso_timestamp = datetime.now().isoformat('T')
 
-    item_link_url = query.config.url
+    item_link_url = query.config.base_url
 
     content_body_list = [
         f"{get_price_entry(date, price)}" for date, price in result_dict.items()]
@@ -102,20 +107,15 @@ def get_request_bodies(query, dates):
     request_dict = {}
     for date in dates:
         request_body = {
-            'transitDefinitions': [
+            'data':
                 {
-                    'direction': 'outward',
-                    'origin': query.from_id,
-                    'destination': query.to_id,
-                    'journeyDate': {
-                        'type': 'departAfter',
-                        'time': date.isoformat()
-                    }
+                    'adults': 1,
+                    'destinationNlc': str(query.to_id),
+                    'originNlc': str(query.from_id),
+                    'outwardDateTime': date.isoformat(),
+                    'outwardDepartAfter': True,
+                    'railcards': [],
                 }
-            ],
-            'type': 'single',
-            'maximumJourneys': 1,
-            'requestedCurrencyCode': query.config.currency
         }
         request_dict[date] = request_body
 
@@ -137,41 +137,38 @@ def get_item_listing(query):
         json_dict = get_response_dict(query_url, query, body)
 
         if json_dict:
-            # assume next journey is closest to requested time
-            journeys = json_dict['data']['journeySearch']['journeys']
+            journeys = json_dict['data']['outwardservices']
 
-            if journeys and journeys.values():
-                first_journey = list(journeys.values())[0]
+            filtered_journeys = None
+
+            if journeys:
+                # assume next journey is closest to requested time
+                filtered_journeys = [
+                    journey for journey in journeys
+                    if datetime.fromisoformat(journey['departuredatetime']) > date]
+
+            if filtered_journeys:
+                first_journey = filtered_journeys[0]
 
                 departure_dt = datetime.fromisoformat(
-                    first_journey['departAt'])
+                    first_journey['departuredatetime'])
 
-            fares = json_dict['data']['journeySearch']['fares']
+                fares = first_journey['cheapestfareselection']
 
-            if isinstance(fares, dict):
-                fare_list = list(fares.values())
-                fare_types = json_dict.get('data').get('fareTypes')
+                if isinstance(fares, dict):
+                    fare_types = first_journey['otherfaregroups']
 
-                selected_fare = None
+                    selected_fare = fares['cheapest']
 
-                if len(fare_list) == 1:
-                    selected_fare = fare_list[0]
-                elif len(fare_list) > 1:
-                    fare_prices = [float(fare['fullPrice']['amount'])
-                                   for fare in fare_list]
-                    lowest_price = min(fare_prices)
-                    selected_fare = [
-                        fare for fare in fare_list
-                        if fare['fullPrice']['amount'] == lowest_price][0]
+                    selected_fare_type = [
+                        fare_type for fare_type in fare_types
+                        if fare_type['faregroupid'] == selected_fare['singlefaregroupid']][0]
 
-                if selected_fare:
-                    remaining_seats = selected_fare['availability'].get(
-                        'remaining')
+                    remaining_seats = selected_fare_type['availablespaces']
+                    fare_type_name = selected_fare_type['faregroupname']
 
-                    fare_type_name = [
-                        fare_type['name'] for fare_type in fare_types.values()
-                        if fare_type['id'] == selected_fare['fareType']][0]
-                    fare_price = str(selected_fare['fullPrice']['amount'])
+                    fare_price = '{:.2f}'.format(
+                        selected_fare['singlefarecost'] / 100)
 
                     fare_text = [query.config.currency,
                                  fare_price, f"({fare_type_name})"]

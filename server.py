@@ -1,5 +1,4 @@
 import random
-import re
 
 from flask import Flask, abort, jsonify, request
 from flask.logging import create_logger
@@ -28,15 +27,11 @@ config = FeedConfig(
 useragent_list = get_useragent_list(DeviceType.PHONES, config)
 
 
-def get_newrelic_version():
-    version_pattern = r'(?:window\.__VERSION__=")([0-9.]{9})"'
-
-    init_response = config.session.get(config.url)
+def get_session_token():
+    init_response = config.session.get(config.url + config.basket_uri)
     config.logger.debug(
-        f"Getting newrelic version: {config.url}")
-    match = re.search(version_pattern, init_response.text)
-    if match:
-        config.newrelic_version = match[1]
+        f"Getting session token: {config.url}")
+    config.session_token = init_response.headers.get('Session-Token')
 
 
 def set_useragent():
@@ -70,8 +65,8 @@ def process_listing():
     if not config.useragent:
         set_useragent()
 
-    if not config.newrelic_version:
-        get_newrelic_version()
+    if not config.session_token:
+        get_session_token()
 
     query = GwrQuery(status=QueryStatus(), config=config, **request_dict)
 
