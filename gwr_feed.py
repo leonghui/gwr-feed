@@ -28,29 +28,36 @@ def get_response_dict(url, query, body):
         logger.error(f"{query.journey} - {type(rex)}: {rex}")
         return None
 
-    # return HTTP error code
-    if not response.ok:
-        if response.status_code == 401:
-            unauth_msg = f"{query.journey} - invalid token, resetting session"
-
-            logger.error(unauth_msg)
-            reset_query_session(query)
-
-            abort(response.status_code, unauth_msg)
-        elif response.json():
-            logger.error(f"{query.journey} - error from source")
-            error_msg = f"{query.journey} - {response.json().get('errors')}"
-            abort(response.status_code, error_msg)
-        else:
-            logger.error(f"{query.journey} - raw error from source")
-            logger.debug(
-                f"{query.journey} - dumping input: {response.text}")
-        return None
-    else:
-        logger.debug(
-            f"{query.journey} - response cached: {response.from_cache}")
-
     try:
+        # return HTTP error code
+        if not response.ok:
+            response_json = response.json()
+            json_errors = response_json.get('errors')
+
+            if response.status_code == 401:
+                unauth_msg = f"{query.journey} - invalid token, resetting session"
+
+                logger.error(unauth_msg)
+                reset_query_session(query)
+
+                abort(response.status_code, unauth_msg)
+            elif json_errors:
+                # Ignore error message '20003: No fares found for journey.'
+                if list(filter(lambda x: '20003' in x, json_errors)):
+                    return None
+                else:
+                    logger.error(f"{query.journey} - error from source")
+                    logger.error(
+                        f"{query.journey} - {json_errors}")
+            else:
+                logger.error(f"{query.journey} - raw error from source")
+                logger.debug(
+                    f"{query.journey} - dumping response: {response.text}")
+            return None
+        else:
+            logger.debug(
+                f"{query.journey} - response cached: {response.from_cache}")
+
         return response.json()
     except JSONDecodeError as jdex:
         logger.error(f"{query.journey} - {type(jdex)}: {jdex}")
