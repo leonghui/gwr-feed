@@ -1,9 +1,9 @@
-# trainline-feed
-A simple Python script to generate a [JSON Feed](https://github.com/manton/JSONFeed) for search for train tickets on [Trainline](https://www.trainline.com). Only supports single (one-way) journeys.
+# gwr-feed
+A simple Python script to generate a [JSON Feed](https://github.com/manton/JSONFeed) for search for train tickets on [Great Western Railway](https://www.gwr.com). Only supports single (one-way) journeys.
 
 Served over [Flask!](https://github.com/pallets/flask/)
 
-Use the [Docker build](https://github.com/users/leonghui/packages/container/package/trainline-feed) to host your own instance.
+Use the [Docker build](https://github.com/users/leonghui/packages/container/package/gwr-feed) to host your own instance.
 
 1. Set your timezone as an environment variable (see [docker docs]): `TZ=America/Los_Angeles`
 

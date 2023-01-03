@@ -6,8 +6,8 @@ from flask.logging import create_logger
 from requests_cache import CachedSession
 
 from mozilla_devices import DeviceType, get_useragent_list
-from trainline_feed import get_item_listing
-from trainline_feed_data import FeedConfig, QueryStatus, TrainlineQuery, request_headers
+from gwr_feed import get_item_listing
+from gwr_feed_data import FeedConfig, QueryStatus, GwrQuery, request_headers
 
 
 app = Flask(__name__)
@@ -60,11 +60,11 @@ def generate_response(query):
 @app.route('/journey', methods=['GET'])
 def process_listing():
     request_dict = {
-        'from_code': request.args.get('from') or TrainlineQuery.from_code,
-        'to_code': request.args.get('to') or TrainlineQuery.to_code,
-        'time_str': request.args.get('at') or TrainlineQuery.time_str,
-        'date_str': request.args.get('on') or TrainlineQuery.date_str,
-        'weeks_ahead_str': request.args.get('weeks') or TrainlineQuery.weeks_ahead_str
+        'from_code': request.args.get('from') or GwrQuery.from_code,
+        'to_code': request.args.get('to') or GwrQuery.to_code,
+        'time_str': request.args.get('at') or GwrQuery.time_str,
+        'date_str': request.args.get('on') or GwrQuery.date_str,
+        'weeks_ahead_str': request.args.get('weeks') or GwrQuery.weeks_ahead_str
     }
 
     if not config.useragent:
@@ -73,7 +73,7 @@ def process_listing():
     if not config.newrelic_version:
         get_newrelic_version()
 
-    query = TrainlineQuery(status=QueryStatus(), config=config, **request_dict)
+    query = GwrQuery(status=QueryStatus(), config=config, **request_dict)
 
     return generate_response(query)
 

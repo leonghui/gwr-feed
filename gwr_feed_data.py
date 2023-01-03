@@ -1,18 +1,17 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
 from logging import Logger
 
 from requests_cache import CachedSession
 
-from trainline_location import get_station_id
+from gwr_location import get_station_id
 
 
 CURRENCY_CODE = 'GBP'
 DEFAULT_COUNTRY = 'GB'
 DEFAULT_LANGUAGE = 'en-GB'
-TRAINLINE_DOMAIN = 'www.thetrainline.com'
-TRAINLINE_URL = 'https://' + TRAINLINE_DOMAIN
+GWR_DOMAIN = 'www.gwr.com'
+GWR_URL = 'https://' + GWR_DOMAIN
 LOCATIONS_SEARCH_URI = '/api/locations-search/v1/search?'
 JOURNEY_SEARCH_URI = '/api/journey-search/'
 
@@ -32,8 +31,8 @@ class FeedConfig():
     useragent: str = ''
     newrelic_version: str = ''
     country: str = DEFAULT_COUNTRY
-    url: str = TRAINLINE_URL
-    domain: str = TRAINLINE_DOMAIN
+    url: str = GWR_URL
+    domain: str = GWR_DOMAIN
     locations_uri: str = LOCATIONS_SEARCH_URI
     journey_uri: str = JOURNEY_SEARCH_URI
     currency: str = CURRENCY_CODE
@@ -119,7 +118,7 @@ class _BaseQuery:
 
 
 @dataclass()
-class TrainlineQuery(_BaseQuery):
+class GwrQuery(_BaseQuery):
 
     def __post_init__(self):
         self.validate_station_code()
