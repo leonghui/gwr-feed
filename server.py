@@ -1,10 +1,7 @@
-import random
-
 from flask import Flask, abort, jsonify, request
 from flask.logging import create_logger
 from requests_cache import CachedSession
 
-from mozilla_devices import DeviceType, get_useragent_list
 from gwr_feed import get_item_listing
 from gwr_feed_data import FeedConfig, QueryStatus, GwrQuery, request_headers
 
@@ -24,20 +21,12 @@ config = FeedConfig(
     headers=request_headers
 )
 
-useragent_list = get_useragent_list(DeviceType.PHONES, config)
-
 
 def get_session_token():
     init_response = config.session.get(config.url + config.basket_uri)
     config.logger.debug(
         f"Getting session token: {config.url}")
     config.session_token = init_response.headers.get('Session-Token')
-
-
-def set_useragent():
-    config.useragent = random.choice(useragent_list)
-    config.session.headers['User-Agent'] = config.useragent
-    config.logger.debug(f"Using user-agent: {config.useragent}")
 
 
 def generate_response(query):
@@ -61,9 +50,6 @@ def process_listing():
         'date_str': request.args.get('on') or GwrQuery.date_str,
         'weeks_ahead_str': request.args.get('weeks') or GwrQuery.weeks_ahead_str
     }
-
-    if not config.useragent:
-        set_useragent()
 
     if not config.session_token:
         get_session_token()

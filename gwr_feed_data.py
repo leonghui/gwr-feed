@@ -29,7 +29,6 @@ def ceil_dt(dt, delta):
 class FeedConfig():
     session: CachedSession
     logger: Logger
-    useragent: str = ''
     session_token: str = ''
     url: str = GWR_API_URL
     base_url: str = GWR_BASE_URL

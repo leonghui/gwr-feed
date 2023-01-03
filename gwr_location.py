@@ -1,6 +1,3 @@
-from urllib.parse import urlencode
-
-
 def get_station_id(station_code, config):
 
     base_url = config.url + config.locations_uri

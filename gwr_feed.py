@@ -7,7 +7,6 @@ from json_feed_data import JSONFEED_VERSION_URL, JsonFeedItem, JsonFeedTopLevel
 
 
 def reset_query_session(query):
-    query.config.useragent = None
     query.config.session_token = None
     query.config.session.cookies.clear()
 
@@ -17,7 +16,6 @@ def get_response_dict(url, query, body):
     logger = config.logger
     session = config.session
 
-    config.headers['User-Agent'] = config.useragent
     config.headers['Session-Token'] = config.session_token
     session.headers = config.headers
 
