@@ -17,6 +17,7 @@ BASKET_URI = '/customer/basket'
 
 request_headers = {
     'Accept-Encoding': 'gzip, deflate, br',
+    'Cache-Control': 'no-cache',
     'Content-Type': 'application/json',
 }
 

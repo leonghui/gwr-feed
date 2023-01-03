@@ -14,7 +14,6 @@ config = FeedConfig(
     session=CachedSession(
         allowable_methods=('GET', 'POST'),
         stale_if_error=True,
-        cache_control=True,
         backend='memory'),
     logger=app.logger,
     headers=request_headers

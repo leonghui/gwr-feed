@@ -7,7 +7,7 @@ def get_station_id(station_code, config):
     config.logger.debug(
         f"Querying endpoint: {search_url}")
 
-    location_response = config.session.get(search_url)
+    location_response = config.session.get(search_url, expire_after=-1)
 
     if location_response.ok:
         location_dict = location_response.json()
