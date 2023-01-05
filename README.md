@@ -15,6 +15,8 @@ Use the [Docker build](https://github.com/users/leonghui/packages/container/pack
     - number of weeks to look ahead: `http://<host>/?from=BHM&to=EUS&weeks=2`
     - or any combination of the above
 
+Note: set a longer timeout on your feed reader if you use the 'weeks' option
+
 E.g.
 ```
 Train prices from MAN (Manchester Piccadilly) to PAD (London Paddington) at 9pm:
