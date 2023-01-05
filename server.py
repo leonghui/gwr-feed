@@ -21,9 +21,10 @@ config = FeedConfig(
 
 
 def get_session_token():
-    init_response = config.session.get(config.url + config.basket_uri)
+    basket_url = config.url + config.basket_uri
+    init_response = config.session.get(basket_url)
     config.logger.debug(
-        f"Getting session token: {config.url}")
+        f"Getting session token: {basket_url}")
     config.session_token = init_response.headers.get('Session-Token')
 
 
@@ -49,8 +50,8 @@ def process_listing():
         'weeks_ahead_str': request.args.get('weeks') or GwrQuery.weeks_ahead_str
     }
 
-    if not config.session_token:
-        get_session_token()
+    # access_token expires after 45 mins, get a new token for each query
+    get_session_token()
 
     query = GwrQuery(status=QueryStatus(), config=config, **request_dict)
 
