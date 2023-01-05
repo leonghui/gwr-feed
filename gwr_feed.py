@@ -6,11 +6,6 @@ from requests.exceptions import JSONDecodeError, RequestException
 from json_feed_data import JSONFEED_VERSION_URL, JsonFeedItem, JsonFeedTopLevel
 
 
-def reset_query_session(query):
-    query.config.session_token = None
-    query.config.session.cookies.clear()
-
-
 def get_response_dict(url, query, body):
     config = query.config
     logger = config.logger
@@ -35,10 +30,9 @@ def get_response_dict(url, query, body):
             json_errors = response_json.get('errors')
 
             if response.status_code == 401:
-                unauth_msg = f"{query.journey} - invalid token, resetting session"
+                unauth_msg = f"{query.journey} - invalid token: {query.config.session_token}"
 
                 logger.error(unauth_msg)
-                reset_query_session(query)
 
                 abort(response.status_code, unauth_msg)
             elif json_errors:
@@ -51,7 +45,7 @@ def get_response_dict(url, query, body):
                         f"{query.journey} - {json_errors}")
             else:
                 logger.error(f"{query.journey} - raw error from source")
-                logger.debug(
+                logger.error(
                     f"{query.journey} - dumping response: {response.text}")
             return None
         else:
