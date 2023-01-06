@@ -10,33 +10,33 @@ def get_response_dict(url, query, body):
     config = query.config
     logger = config.logger
     session = config.session
+    log_header = f"{query.journey} {body['data']['outwardDateTime']}"
 
     config.headers['Session-Token'] = config.session_token
     session.headers = config.headers
 
     logger.debug(
-        f"{query.journey} - querying endpoint: {url}")
+        f"{log_header} - querying endpoint: {url}")
 
     try:
         response = session.post(url, data=json.dumps(body))
     except RequestException as rex:
-        logger.error(f"{query.journey} - {type(rex)}: {rex}")
+        logger.error(f"{log_header} - {type(rex)}: {rex}")
         return None
 
+    # return HTTP error code
+    if not response.ok:
+        logger.error(
+            f"{log_header} - HTTP {response.status_code} - {response.title}")
+        abort(response.status_code, response.text)
+    else:
+        logger.debug(
+            f"{log_header} - response cached: {response.from_cache}")
     try:
-        # return HTTP error code
-        if not response.ok:
-            logger.error(
-                f"{query.journey} - HTTP {response.status_code} - {response.text}")
-            abort(response.status_code, response.text)
-        else:
-            logger.debug(
-                f"{query.journey} - response cached: {response.from_cache}")
-
         return response.json()
     except JSONDecodeError as jdex:
         logger.error(
-            f"{query.journey} - HTTP {response.status_code} {type(jdex)}: {jdex}")
+            f"{log_header} - HTTP {response.status_code} {type(jdex)}: {jdex}")
         return None
 
 
