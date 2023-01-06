@@ -26,36 +26,9 @@ def get_response_dict(url, query, body):
     try:
         # return HTTP error code
         if not response.ok:
-            response_json = response.json()
-            json_errors = response_json.get('errors')
-
-            if response.status_code == 401:
-                timeout_msg = f"{query.journey} - invalid token: {query.config.session_token}"
-
-                logger.error(timeout_msg)
-
-                abort(response.status_code, timeout_msg)
-            elif response.status_code == 504:
-                timeout_msg = f"{query.journey} - gateway timed out"
-
-                logger.error(timeout_msg)
-
-                abort(response.status_code, timeout_msg)
-            elif json_errors:
-                # Ignore error message '20003: No fares found for journey.'
-                if list(filter(lambda x: '20003' in x, json_errors)):
-                    return None
-                else:
-                    logger.error(
-                        f"{query.journey} - HTTP {response.status_code} error from source")
-                    logger.error(
-                        f"{query.journey} - {json_errors}")
-            else:
-                logger.error(
-                    f"{query.journey} - HTTP {response.status_code} raw error from source")
-                logger.error(
-                    f"{query.journey} - {response.text}")
-            return None
+            logger.error(
+                f"{query.journey} - HTTP {response.status_code} - {response.text}")
+            abort(response.status_code, response.text)
         else:
             logger.debug(
                 f"{query.journey} - response cached: {response.from_cache}")
