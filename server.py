@@ -1,4 +1,5 @@
-from flask import Flask, abort, jsonify, request
+import requests
+from flask import Flask, abort, jsonify, request as rq
 from requests_cache import CachedSession
 
 from gwr_feed import get_item_listing
@@ -22,10 +23,10 @@ config = FeedConfig(
 
 def get_session_token():
     basket_url = config.url + config.basket_uri
-    init_response = config.session.get(basket_url)
+    init_response = requests.get(basket_url)
     config.logger.debug(
         f"Getting session token: {basket_url}")
-    config.session_token = init_response.headers.get('Session-Token')
+    config.session_token = init_response.json().get('sessiontoken')
 
 
 def generate_response(query):
@@ -43,11 +44,11 @@ def generate_response(query):
 @app.route('/journey', methods=['GET'])
 def process_listing():
     request_dict = {
-        'from_code': request.args.get('from') or GwrQuery.from_code,
-        'to_code': request.args.get('to') or GwrQuery.to_code,
-        'time_str': request.args.get('at') or GwrQuery.time_str,
-        'date_str': request.args.get('on') or GwrQuery.date_str,
-        'weeks_ahead_str': request.args.get('weeks') or GwrQuery.weeks_ahead_str
+        'from_code': rq.args.get('from') or GwrQuery.from_code,
+        'to_code': rq.args.get('to') or GwrQuery.to_code,
+        'time_str': rq.args.get('at') or GwrQuery.time_str,
+        'date_str': rq.args.get('on') or GwrQuery.date_str,
+        'weeks_ahead_str': rq.args.get('weeks') or GwrQuery.weeks_ahead_str
     }
 
     # access_token expires after 45 mins, get a new token for each query
