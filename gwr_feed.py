@@ -26,6 +26,11 @@ def get_response_dict(url, query, body):
 
     # return HTTP error code
     if not response.ok:
+        if response.status_code == 500 and '20003' in response.text:
+            logger.info(
+                f"{log_header} - no fares found")
+            return None
+
         logger.error(
             f"{log_header} - HTTP {response.status_code} - {response.title}")
         abort(response.status_code, response.text)
