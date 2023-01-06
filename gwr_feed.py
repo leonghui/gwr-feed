@@ -32,7 +32,7 @@ def get_response_dict(url, query, body):
             return None
 
         logger.error(
-            f"{log_header} - HTTP {response.status_code} - {response.title}")
+            f"{log_header} - HTTP {response.status_code}")
         abort(response.status_code, response.text)
     else:
         logger.debug(
