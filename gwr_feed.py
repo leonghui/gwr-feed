@@ -40,13 +40,13 @@ def get_response_dict(url, query, body):
                 if list(filter(lambda x: '20003' in x, json_errors)):
                     return None
                 else:
-                    logger.error(f"{query.journey} - error from source")
+                    logger.error(f"{query.journey} - {response.status_code} error from source")
                     logger.error(
                         f"{query.journey} - {json_errors}")
             else:
-                logger.error(f"{query.journey} - raw error from source")
+                logger.error(f"{query.journey} - {response.status_code} raw error from source")
                 logger.error(
-                    f"{query.journey} - dumping response: {response.text}")
+                    f"{query.journey} - {response.text}")
             return None
         else:
             logger.debug(
