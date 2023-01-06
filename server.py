@@ -23,10 +23,11 @@ config = FeedConfig(
 
 def get_session_token():
     basket_url = config.url + config.basket_uri
-    init_response = requests.get(basket_url)
-    config.logger.debug(
-        f"Getting session token: {basket_url}")
-    config.session_token = init_response.json().get('sessiontoken')
+    init_response = requests.get(basket_url, timeout=10)
+    new_session_token = init_response.json().get('sessiontoken')
+    if new_session_token:
+        config.logger.debug(f"Received new session token: {new_session_token}")
+        config.session_token = new_session_token
 
 
 def generate_response(query):
