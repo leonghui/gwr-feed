@@ -66,8 +66,7 @@ def generate_items(query, result_dict):
     item_title_text = query.config.domain + ' - ' + query.journey
 
     def get_price_entry(date, price):
-        return f"<p>{date.isoformat(timespec='minutes').replace('+00:00', 'Z')}" + \
-            f": {price}</p>"
+        return f"{date.isoformat(timespec='minutes')}: {price}"
 
     iso_timestamp = datetime.now().isoformat('T')
 
@@ -76,7 +75,7 @@ def generate_items(query, result_dict):
     content_body_list = [
         f"{get_price_entry(date, price)}" for date, price in result_dict.items()]
 
-    content_body = ''.join(content_body_list)
+    content_body = '<br/>'.join(content_body_list)
 
     feed_item = JsonFeedItem(
         id=iso_timestamp,
