@@ -26,6 +26,10 @@ def get_response_dict(url, query, body):
 
     # return HTTP error code
     if not response.ok:
+        if response.status_code == 400 and 'past' in response.text:
+            # ignore errors due to past departure dates
+            return None
+
         if response.status_code == 500 and '20003' in response.text:
             logger.info(
                 f"{log_header} - no fares found")
