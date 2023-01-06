@@ -40,11 +40,13 @@ def get_response_dict(url, query, body):
                 if list(filter(lambda x: '20003' in x, json_errors)):
                     return None
                 else:
-                    logger.error(f"{query.journey} - {response.status_code} error from source")
+                    logger.error(
+                        f"{query.journey} - HTTP {response.status_code} error from source")
                     logger.error(
                         f"{query.journey} - {json_errors}")
             else:
-                logger.error(f"{query.journey} - {response.status_code} raw error from source")
+                logger.error(
+                    f"{query.journey} - HTTP {response.status_code} raw error from source")
                 logger.error(
                     f"{query.journey} - {response.text}")
             return None
@@ -54,7 +56,8 @@ def get_response_dict(url, query, body):
 
         return response.json()
     except JSONDecodeError as jdex:
-        logger.error(f"{query.journey} - {type(jdex)}: {jdex}")
+        logger.error(
+            f"{query.journey} - HTTP {response.status_code} {type(jdex)}: {jdex}")
         return None
 
 
