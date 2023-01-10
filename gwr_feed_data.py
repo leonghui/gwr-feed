@@ -60,6 +60,8 @@ class _BaseQuery:
     timestamp: datetime = None
     weeks_ahead_str: str = '0'
     weeks_ahead: int = 0
+    seats_left_str: str = 'false'
+    seats_left: bool = False
 
     def init_station_ids(self, feed_config):
         self.from_id = get_station_id(self.from_code, feed_config)
@@ -86,6 +88,11 @@ class _BaseQuery:
             if not all(time_rules):
                 self.status.errors.append('Invalid departure time')
 
+    def init_seats_left(self):
+        if self.seats_left_str:
+            self.seats_left = bool(
+                self.seats_left_str.lower() in ('true', 'y', 'yes'))
+
     def validate_departure_date(self):
         if self.date_str:
             date_rules = [self.date_str.isnumeric(), len(self.date_str) == 8]
@@ -109,6 +116,12 @@ class _BaseQuery:
             if not self.weeks_ahead_str.isnumeric():
                 self.status.errors.append('Invalid week count')
 
+    def validate_seats_left(self):
+        if self.seats_left_str:
+            if not self.seats_left_str.isalpha():
+                self.status.errors.append(
+                    'seats_left should be either true or false')
+
 
 @dataclass()
 class GwrQuery(_BaseQuery):
@@ -118,6 +131,7 @@ class GwrQuery(_BaseQuery):
         self.validate_departure_time()
         self.validate_departure_date()
         self.validate_weeks_ahead()
+        self.validate_seats_left()
         self.status.refresh()
 
         if self.status.ok:
@@ -125,4 +139,5 @@ class GwrQuery(_BaseQuery):
             self.init_journey()
             self.init_timestamp()
             self.init_weeks_ahead()
+            self.init_seats_left()
             self.status.refresh()

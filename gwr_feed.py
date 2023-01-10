@@ -163,7 +163,7 @@ def get_item_listing(query):
                                  fare_price, f"({fare_type_name})"]
 
                     #   'availablespaces' appears to be defaulted to 9 so we will ignore that
-                    if remaining_seats and remaining_seats != 9:
+                    if query.seats_left and remaining_seats and remaining_seats != 9:
                         fare_text.insert(2, f"({remaining_seats} left)")
 
                     result_dict[departure_dt] = ' '.join(fare_text)

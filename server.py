@@ -49,7 +49,8 @@ def process_listing():
         'to_code': rq.args.get('to') or GwrQuery.to_code,
         'time_str': rq.args.get('at') or GwrQuery.time_str,
         'date_str': rq.args.get('on') or GwrQuery.date_str,
-        'weeks_ahead_str': rq.args.get('weeks') or GwrQuery.weeks_ahead_str
+        'weeks_ahead_str': rq.args.get('weeks') or GwrQuery.weeks_ahead_str,
+        'seats_left_str': rq.args.get('seats_left') or GwrQuery.seats_left_str
     }
 
     # access_token expires after 45 mins, get a new token for each query
