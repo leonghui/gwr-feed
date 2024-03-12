@@ -16,7 +16,7 @@ LOCATIONS_SEARCH_URI = "/rail/locations"
 JOURNEY_SEARCH_URI = "/rail/journeys/search"
 BASKET_URI = "/customer/basket"
 FAVICON_URI = "/img/favicons/favicon.ico"
-QUERY_LIMIT = 5
+QUERY_LIMIT = 4
 
 request_headers = {
     "User-Agent": "",
