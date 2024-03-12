@@ -12,14 +12,13 @@ def get_response_dict(url, query, body):
     session = config.session
     log_header = f"{query.journey} {body['data']['outwardDateTime']}"
 
-    config.headers['Session-Token'] = config.session_token
-    session.headers = config.headers
+    cookies = {"access_token_v2": config.session_token}
 
     logger.debug(
         f"{log_header} - querying endpoint: {url}")
 
     try:
-        response = session.post(url, data=json.dumps(body))
+        response = session.post(url, cookies=cookies, json=body)
     except RequestException as rex:
         logger.error(f"{log_header} - {type(rex)}: {rex}")
         return None
