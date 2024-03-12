@@ -7,18 +7,21 @@ from gwr_feed_data import FeedConfig, QueryStatus, GwrQuery, request_headers
 
 
 app = Flask(__name__)
-app.config.update({'JSONIFY_MIMETYPE': 'application/feed+json'})
+app.config.update({"JSONIFY_MIMETYPE": "application/feed+json"})
 
 # app.debug = True
 
 config = FeedConfig(
     debug=app.debug,
     session=CachedSession(
-        allowable_methods=('GET', 'POST'),
+        allowable_methods=("GET", "POST"),
         stale_if_error=True,
-        backend='memory'),
+        cache_control=False,
+        expire_after=300,
+        backend="memory",
+    ),
     logger=app.logger,
-    headers=request_headers
+    headers=request_headers,
 )
 
 
@@ -33,8 +36,7 @@ def get_session_token():
 
 def generate_response(query):
     if not query.status.ok:
-        abort(400, description='Errors found: ' +
-              ', '.join(query.status.errors))
+        abort(400, description="Errors found: " + ", ".join(query.status.errors))
 
     config.logger.debug(query)  # log values
 
@@ -42,16 +44,16 @@ def generate_response(query):
     return jsonify(output)
 
 
-@app.route('/', methods=['GET'])
-@app.route('/journey', methods=['GET'])
+@app.route("/", methods=["GET"])
+@app.route("/journey", methods=["GET"])
 def process_listing():
     request_dict = {
-        'from_code': rq.args.get('from') or GwrQuery.from_code,
-        'to_code': rq.args.get('to') or GwrQuery.to_code,
-        'time_str': rq.args.get('at') or GwrQuery.time_str,
-        'date_str': rq.args.get('on') or GwrQuery.date_str,
-        'weeks_ahead_str': rq.args.get('weeks') or GwrQuery.weeks_ahead_str,
-        'seats_left_str': rq.args.get('seats_left') or GwrQuery.seats_left_str
+        "from_code": rq.args.get("from") or GwrQuery.from_code,
+        "to_code": rq.args.get("to") or GwrQuery.to_code,
+        "time_str": rq.args.get("at") or GwrQuery.time_str,
+        "date_str": rq.args.get("on") or GwrQuery.date_str,
+        "weeks_ahead_str": rq.args.get("weeks") or GwrQuery.weeks_ahead_str,
+        "seats_left_str": rq.args.get("seats_left") or GwrQuery.seats_left_str,
     }
 
     # access_token expires after 45 mins, get a new token for each query
@@ -62,4 +64,4 @@ def process_listing():
     return generate_response(query)
 
 
-app.run(host='0.0.0.0')
+app.run(host="0.0.0.0")
