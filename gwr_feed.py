@@ -120,7 +120,7 @@ def get_request_bodies(query, dates):
 def get_item_listing(query):
 
     dates = [
-        query.timestamp + timedelta(days=(7 * x)) for x in range(query.weeks_ahead + 1)
+        query.query_dt + timedelta(days=(7 * x)) for x in range(query.weeks_ahead + 1)
     ]
 
     request_dict = get_request_bodies(query, dates)
