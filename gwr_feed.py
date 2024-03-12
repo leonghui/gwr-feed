@@ -118,7 +118,6 @@ def get_request_bodies(query, dates):
 
 
 def get_item_listing(query):
-    query_url = query.config.url + query.config.journey_uri
 
     dates = [
         query.timestamp + timedelta(days=(7 * x)) for x in range(query.weeks_ahead + 1)
@@ -130,7 +129,7 @@ def get_item_listing(query):
 
     for date, body in request_dict.items():
 
-        json_dict = get_response_dict(query_url, query, body)
+        json_dict = get_response_dict(query.config.journey_url, query, body)
 
         if json_dict:
             journeys = json_dict["data"]["outwardservices"]

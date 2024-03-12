@@ -34,9 +34,9 @@ class FeedConfig:
     base_url: str = GWR_BASE_URL
     favicon_url: str = GWR_BASE_URL + FAVICON_URI
     domain: str = GWR_DOMAIN
-    locations_uri: str = LOCATIONS_SEARCH_URI
-    journey_uri: str = JOURNEY_SEARCH_URI
-    basket_uri: str = BASKET_URI
+    locations_url: str = GWR_API_URL + LOCATIONS_SEARCH_URI
+    journey_url: str = GWR_API_URL + JOURNEY_SEARCH_URI
+    basket_url: str = GWR_API_URL + BASKET_URI
     currency: str = CURRENCY_CODE
     headers: dict = field(default_factory=dict)
 

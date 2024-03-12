@@ -26,8 +26,7 @@ config = FeedConfig(
 
 
 def get_session_token():
-    basket_url = config.url + config.basket_uri
-    init_response = requests.get(basket_url, timeout=10)
+    init_response = requests.get(config.basket_url, timeout=10)
     new_session_token = init_response.headers.get("Session-Token")
     if new_session_token:
         config.logger.debug(f"Received new session token: {new_session_token}")

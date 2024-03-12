@@ -1,8 +1,6 @@
 def get_station_id(station_code, config):
 
-    base_url = config.url + config.locations_uri
-
-    search_url = base_url
+    search_url = config.locations_url
 
     config.logger.debug(f"Querying endpoint: {search_url}")
 
