@@ -46,7 +46,7 @@ class QueryStatus:
     errors: list[str] = field(default_factory=list)
 
     def refresh(self):
-        self.ok = False if self.errors else True
+        self.ok = not self.errors
 
 
 @dataclass(kw_only=True)
