@@ -158,7 +158,7 @@ def get_item_listing(query):
                 filtered_journeys = [
                     journey
                     for journey in journeys
-                    if datetime.fromisoformat(journey["departuredatetime"]) > date
+                    if datetime.fromisoformat(journey["departuredatetime"]) >= date
                 ]
 
             if filtered_journeys:
