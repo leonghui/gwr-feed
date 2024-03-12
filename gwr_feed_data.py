@@ -20,7 +20,6 @@ request_headers = {
     "User-Agent": "",
     "Accept-Encoding": "gzip, deflate, br",
     "Cache-Control": "no-cache",
-    "Content-Type": "application/json",
 }
 
 
