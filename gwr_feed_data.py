@@ -26,7 +26,8 @@ request_headers = {
 class FeedConfig():
     session: CachedSession
     logger: Logger
-    session_token: str = ''
+    debug: bool = False
+    session_token: str = ""
     url: str = GWR_API_URL
     base_url: str = GWR_BASE_URL
     domain: str = GWR_DOMAIN

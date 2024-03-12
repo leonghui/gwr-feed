@@ -12,6 +12,7 @@ app.config.update({'JSONIFY_MIMETYPE': 'application/feed+json'})
 # app.debug = True
 
 config = FeedConfig(
+    debug=app.debug,
     session=CachedSession(
         allowable_methods=('GET', 'POST'),
         stale_if_error=True,
