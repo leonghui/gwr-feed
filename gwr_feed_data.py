@@ -129,7 +129,7 @@ class _BaseQuery:
 
 
 @dataclass()
-class GwrQuery(_BaseQuery):
+class DatetimeQuery(_BaseQuery):
 
     def __post_init__(self):
         self.validate_station_code()
@@ -146,3 +146,4 @@ class GwrQuery(_BaseQuery):
             self.init_weeks_ahead()
             self.init_seats_left()
             self.status.refresh()
+

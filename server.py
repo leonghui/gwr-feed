@@ -3,7 +3,7 @@ from flask import Flask, abort, jsonify, request as rq
 from requests_cache import CachedSession
 
 from gwr_feed import get_item_listing
-from gwr_feed_data import FeedConfig, QueryStatus, GwrQuery, request_headers
+from gwr_feed_data import FeedConfig, QueryStatus, DatetimeQuery, request_headers
 
 
 app = Flask(__name__)
@@ -48,18 +48,18 @@ def generate_response(query):
 @app.route("/journey", methods=["GET"])
 def process_listing():
     request_dict = {
-        "from_code": rq.args.get("from") or GwrQuery.from_code,
-        "to_code": rq.args.get("to") or GwrQuery.to_code,
-        "time_str": rq.args.get("at") or GwrQuery.time_str,
-        "date_str": rq.args.get("on") or GwrQuery.date_str,
-        "weeks_ahead_str": rq.args.get("weeks") or GwrQuery.weeks_ahead_str,
-        "seats_left_str": rq.args.get("seats_left") or GwrQuery.seats_left_str,
+        "from_code": rq.args.get("from") or DatetimeQuery.from_code,
+        "to_code": rq.args.get("to") or DatetimeQuery.to_code,
+        "time_str": rq.args.get("at") or DatetimeQuery.time_str,
+        "date_str": rq.args.get("on") or DatetimeQuery.date_str,
+        "weeks_ahead_str": rq.args.get("weeks") or DatetimeQuery.weeks_ahead_str,
+        "seats_left_str": rq.args.get("seats_left") or DatetimeQuery.seats_left_str,
     }
 
     # access_token expires after 45 mins, get a new token for each query
     get_session_token()
 
-    query = GwrQuery(status=QueryStatus(), config=config, **request_dict)
+    query = DatetimeQuery(status=QueryStatus(), config=config, **request_dict)
 
     return generate_response(query)
 
