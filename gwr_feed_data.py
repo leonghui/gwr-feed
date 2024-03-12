@@ -14,6 +14,7 @@ GWR_BASE_URL = "https://www." + GWR_DOMAIN
 LOCATIONS_SEARCH_URI = "/rail/locations"
 JOURNEY_SEARCH_URI = "/rail/journeys/search"
 BASKET_URI = "/customer/basket"
+FAVICON_URI = "/img/favicons/favicon.ico"
 
 request_headers = {
     "User-Agent": "",
@@ -31,6 +32,7 @@ class FeedConfig:
     session_token: str = ""
     url: str = GWR_API_URL
     base_url: str = GWR_BASE_URL
+    favicon_url: str = GWR_BASE_URL + FAVICON_URI
     domain: str = GWR_DOMAIN
     locations_uri: str = LOCATIONS_SEARCH_URI
     journey_uri: str = JOURNEY_SEARCH_URI

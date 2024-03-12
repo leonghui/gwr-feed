@@ -59,13 +59,14 @@ def get_top_level_feed(query, feed_items):
     title_strings = [query.config.domain, query.journey]
 
     base_url = query.config.base_url
+    favicon_url = query.config.favicon_url
 
     json_feed = JsonFeedTopLevel(
         version=JSONFEED_VERSION_URL,
         items=feed_items,
         title=" - ".join(title_strings),
         home_page_url=base_url,
-        favicon=base_url + "/favicon.ico",
+        favicon=favicon_url,
     )
 
     return json_feed
