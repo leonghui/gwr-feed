@@ -82,24 +82,25 @@ def generate_items(query, result_dict):
 
     item_title_text = " - ".join(item_title_list)
 
-    def get_price_entry(date, price):
-        return f"{date.isoformat(timespec='minutes')}: {price}"
+    def get_price_entry(_dt: datetime, fare_text):
+        return f"{_dt.replace(tzinfo=None).isoformat(timespec='minutes')}: {fare_text}"
 
-    iso_timestamp = datetime.now().isoformat("T")
+    iso_timestamp = datetime.now().replace(microsecond=0).isoformat("T")
 
     item_link_url = query.config.base_url
 
     content_body_list = [
-        f"{get_price_entry(date, price)}" for date, price in result_dict.items()
+        f"{get_price_entry(_dt, fare_text)}" for _dt, fare_text in result_dict.items()
     ]
-
-    content_body = "<br/>".join(content_body_list)
+    content_text_body = "\n\n".join(content_body_list)
+    content_html_body = "<br/>".join(content_body_list)
 
     feed_item = JsonFeedItem(
         id=iso_timestamp,
         url=item_link_url,
         title=item_title_text,
-        content_html=content_body + "<br/>" if content_body else "",
+        content_text=content_text_body + "\n\n" if content_text_body else "",
+        content_html=content_html_body + "<br/>" if content_html_body else "",
         date_published=iso_timestamp,
     )
 
