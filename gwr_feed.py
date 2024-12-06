@@ -1,61 +1,12 @@
+import concurrent.futures
 from datetime import datetime, timedelta
 import json
-import concurrent.futures
 
 from croniter import croniter
 from flask import abort
-from requests.exceptions import JSONDecodeError, RequestException
 
 from gwr_feed_data import CronQuery, DatetimeQuery
 from json_feed_data import JSONFEED_VERSION_URL, JsonFeedItem, JsonFeedTopLevel
-
-
-def get_response_dict(url, query: DatetimeQuery, body):
-    config = query.config
-    logger = config.logger
-    session = config.session
-    log_header = f"{query.journey} {body['data']['outwardDateTime']}"
-
-    cookies = {"access_token_v2": config.session_token}
-
-    logger.debug(f"{log_header} - querying endpoint: {url}")
-
-    try:
-        response = session.post(url, cookies=cookies, json=body)
-    except RequestException as rex:
-        logger.error(f"{log_header} - {type(rex)}: {rex}")
-        return None
-
-    # return HTTP error code
-    if not response.ok:
-        if response.status_code == 400 and "past" in response.text:
-            # ignore errors due to past departure dates
-            return None
-
-        if response.status_code == 500 and "20003" in response.text:
-            logger.info(f"{log_header} - no fares found")
-            return None
-
-        error_body = (
-            (
-                "Request headers:\n"
-                f"{response.request.headers}"
-                "\n\nResponse text:\n"
-                f"{response.text}"
-            )
-            if config.debug
-            else None
-        )
-
-        logger.error(f"{log_header} - HTTP {response.status_code}")
-        abort(response.status_code, error_body)
-    else:
-        logger.debug(f"{log_header} - response cached: {response.from_cache}")
-    try:
-        return response.json()
-    except JSONDecodeError as jdex:
-        logger.error(f"{log_header} - HTTP {response.status_code} {type(jdex)}: {jdex}")
-        return None
 
 
 def get_top_level_feed(query: DatetimeQuery, feed_items):
@@ -206,76 +157,6 @@ def mobile_worker(query: DatetimeQuery, _date: datetime, result_dict: dict):
     result_dict[journey_dt] = fare_text
 
 
-def get_request_body(query: DatetimeQuery, _date):
-
-    return {
-        "data": {
-            "adults": 1,
-            "destinationNlc": str(query.to_id),
-            "originNlc": str(query.from_id),
-            "outwardDateTime": _date.isoformat(),
-            "outwardDepartAfter": True,
-            "railcards": [],
-        }
-    }
-
-
-def web_worker(query: DatetimeQuery, _date: datetime, result_dict: dict):
-    body = get_request_body(query, _date)
-
-    json_dict = get_response_dict(query.config.journey_url, query, body)
-
-    if json_dict:
-        journeys = json_dict["data"]["outwardservices"]
-
-        filtered_journeys = None
-
-        if journeys:
-            # assume next journey is closest to requested time
-            filtered_journeys = [
-                journey
-                for journey in journeys
-                if datetime.fromisoformat(journey["departuredatetime"]) >= _date
-            ]
-
-        if filtered_journeys:
-            first_journey = filtered_journeys[0]
-
-            departure_dt = datetime.fromisoformat(first_journey["departuredatetime"])
-
-            fares = first_journey["cheapestfareselection"]
-
-            if isinstance(fares, dict):
-                fare_types = first_journey["otherfaregroups"]
-
-                selected_fare = fares["cheapest"]
-
-                selected_fare_type = [
-                    fare_type
-                    for fare_type in fare_types
-                    if fare_type["faregroupid"] == selected_fare["singlefaregroupid"]
-                ][0]
-
-                remaining_seats = selected_fare_type["availablespaces"]
-                fare_type_name = selected_fare_type["faregroupname"]
-
-                fare_price = "{:.2f}".format(selected_fare["singlefarecost"] / 100)
-
-                fare_text = [
-                    query.config.currency,
-                    fare_price,
-                    f"({fare_type_name})",
-                ]
-
-                #   'availablespaces' appears to be defaulted to 9 so we will ignore that
-                if query.seats_left and remaining_seats and remaining_seats != 9:
-                    fare_text.insert(2, f"({remaining_seats} left)")
-
-                result_dict[departure_dt] = " ".join(fare_text)
-    else:
-        result_dict[_date] = "Not found"
-
-
 def get_dates(query):
     if isinstance(query, DatetimeQuery):
         return [
@@ -306,10 +187,8 @@ def get_pooled_results(query: DatetimeQuery, worker_type):
 
 
 # Default to using mobile API calls which are faster but do not return remaining seats
-def get_item_listing(query: DatetimeQuery, use_mobile_api=True):
-    feed_items = get_pooled_results(
-        query, mobile_worker if use_mobile_api else web_worker
-    )
+def get_item_listing(query: DatetimeQuery):
+    feed_items = get_pooled_results(query, mobile_worker)
 
     json_feed = get_top_level_feed(query, [feed_items])
 
