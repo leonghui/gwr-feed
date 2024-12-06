@@ -13,6 +13,9 @@ def get_top_level_feed(query: DatetimeQuery, feed_items):
 
     title_strings = [query.config.domain, query.journey]
 
+    if isinstance(query, CronQuery):
+        title_strings.append(query.job_str)
+
     base_url = query.config.base_url
     favicon_url = query.config.favicon_url
 
@@ -27,37 +30,30 @@ def get_top_level_feed(query: DatetimeQuery, feed_items):
     return json_feed
 
 
-def generate_items(query: DatetimeQuery, result_dict):
-    item_title_list = [query.config.domain, query.journey]
+def generate_items(query: DatetimeQuery, result_dict: dict[datetime, str]):
+    title_list = [query.config.domain, query.journey]
 
-    if isinstance(query, CronQuery):
-        item_title_list.append(query.job_str)
+    feed_items = []
 
-    item_title_text = " - ".join(item_title_list)
+    for _dt, fare_text in result_dict.items():
+        fare_timestamp = _dt.replace(tzinfo=None).isoformat(timespec="minutes")
+        item_title_text = title_list + [fare_timestamp]
+        published_timestamp = datetime.now().replace(microsecond=0).isoformat("T")
 
-    def get_price_entry(_dt: datetime, fare_text):
-        return f"{_dt.replace(tzinfo=None).isoformat(timespec='minutes')}: {fare_text}"
+        item_link_url = query.config.base_url
 
-    iso_timestamp = datetime.now().replace(microsecond=0).isoformat("T")
+        feed_item = JsonFeedItem(
+            id=published_timestamp,
+            url=item_link_url,
+            title=" - ".join(item_title_text),
+            content_text=fare_text,
+            content_html=fare_text,
+            date_published=published_timestamp,
+        )
 
-    item_link_url = query.config.base_url
+        feed_items.append(feed_item)
 
-    content_body_list = [
-        f"{get_price_entry(_dt, fare_text)}" for _dt, fare_text in result_dict.items()
-    ]
-    content_text_body = "\n\n".join(content_body_list)
-    content_html_body = "<br/>".join(content_body_list)
-
-    feed_item = JsonFeedItem(
-        id=iso_timestamp,
-        url=item_link_url,
-        title=item_title_text,
-        content_text=content_text_body + "\n\n" if content_text_body else "",
-        content_html=content_html_body + "<br/>" if content_html_body else "",
-        date_published=iso_timestamp,
-    )
-
-    return feed_item
+    return feed_items
 
 
 def has_departed(message_dict: dict):
@@ -190,6 +186,6 @@ def get_pooled_results(query: DatetimeQuery, worker_type):
 def get_item_listing(query: DatetimeQuery):
     feed_items = get_pooled_results(query, mobile_worker)
 
-    json_feed = get_top_level_feed(query, [feed_items])
+    json_feed = get_top_level_feed(query, feed_items)
 
     return json_feed
