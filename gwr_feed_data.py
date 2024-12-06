@@ -17,11 +17,24 @@ JOURNEY_SEARCH_URI = "/rail/journeys/search"
 BASKET_URI = "/customer/basket"
 FAVICON_URI = "/img/favicons/favicon.ico"
 QUERY_LIMIT = 4
+X_APP_KEY = "69a273923b31ee667d3593235f91211be1a34232"
+APP_VERSION = "4.52.0"
+MOBILE_BASE_URL = "https://prod.mobileapi." + GWR_DOMAIN
+MOBILE_SEARCH_URI = "/api/v3/train/ticket/search"
 
 request_headers = {
     "User-Agent": "",
     "Accept-Encoding": "gzip, deflate, br",
     "Cache-Control": "no-cache",
+}
+
+mobile_request_headers = {
+    "Accept-Encoding": "gzip",
+    "AppVersion": APP_VERSION,
+    "Content-Type": "application/json; charset=UTF-8",
+    "User-Agent": "okhttp/4.10.0",
+    "X-App-Key": X_APP_KEY,
+    "X-App-Platform": "Android",
 }
 
 
@@ -40,6 +53,8 @@ class FeedConfig:
     basket_url: str = GWR_API_URL + BASKET_URI
     currency: str = CURRENCY_CODE
     headers: dict = field(default_factory=lambda: request_headers)
+    mobile_search_url: str = MOBILE_BASE_URL + MOBILE_SEARCH_URI
+    mobile_headers: dict = field(default_factory=lambda: mobile_request_headers)
 
 
 @dataclass
