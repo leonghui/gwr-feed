@@ -135,10 +135,38 @@ def mobile_worker(query: DatetimeQuery, _date: datetime, result_dict: dict):
     }
 
     logger.debug(f"{log_header} - querying endpoint: {url}")
-    search_response = session.post(
+
+    response = session.post(
         url=url, headers=config.mobile_headers, data=json.dumps(data)
     )
-    search_dict = search_response.json()
+
+    if not response.ok:
+        error_dict = response.json().get("errors")
+        if (
+            response.status_code == 400
+            and error_dict
+            and error_dict[0].get("title") == "20003"
+        ):
+            logger.info(f"{log_header} - no fares found")
+            result_dict[_date] = "Not found"
+            return
+
+        logger.error(f"{log_header} - HTTP {response.status_code}")
+
+        error_body = (
+            (
+                "Request headers:\n"
+                f"{response.request.headers}"
+                "\n\nResponse text:\n"
+                f"{response.text}"
+            )
+            if config.debug
+            else None
+        )
+
+        abort(response.status_code, error_body)
+
+    search_dict = response.json()
 
     journeys = search_dict.get("data").get("outward")
 
@@ -154,25 +182,28 @@ def mobile_worker(query: DatetimeQuery, _date: datetime, result_dict: dict):
     # skip if no results
     if not valid_journeys:
         result_dict[_date] = "Not found"
-    else:
-        closest_journey = min(
-            valid_journeys, key=lambda x: datetime.fromisoformat(x["departure-time"])
-        )
+        return
 
-        cheapest_fare = closest_journey.get("cheapest-price")
+    closest_journey = min(
+        valid_journeys, key=lambda x: datetime.fromisoformat(x["departure-time"])
+    )
 
-        journey_dt = datetime.fromisoformat(closest_journey["departure-time"])
+    cheapest_fare = closest_journey.get("cheapest-price")
 
-        single_std_fares = closest_journey.get("single-fares").get("standard-class")
+    journey_dt = datetime.fromisoformat(closest_journey["departure-time"])
 
-        matching_fare = next(
-            (fare for fare in single_std_fares if fare.get("price") == cheapest_fare),
-            None,
-        )
+    single_std_fares = closest_journey.get("single-fares").get("standard-class")
 
-        fare_text = f"£{'{0:.2f}'.format(cheapest_fare / 100)} ({matching_fare.get("fare-name")})"
+    matching_fare = next(
+        (fare for fare in single_std_fares if fare.get("price") == cheapest_fare),
+        None,
+    )
 
-        result_dict[journey_dt] = fare_text
+    fare_text = (
+        f"£{'{0:.2f}'.format(cheapest_fare / 100)} ({matching_fare.get("fare-name")})"
+    )
+
+    result_dict[journey_dt] = fare_text
 
 
 def get_request_body(query: DatetimeQuery, _date):
