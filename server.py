@@ -1,5 +1,4 @@
 from flask import Flask, abort, jsonify, request as rq
-import requests
 from requests_cache import CachedSession
 
 from gwr_feed import get_item_listing
@@ -24,14 +23,6 @@ config = FeedConfig(
 )
 
 
-def get_session_token():
-    init_response = requests.get(config.basket_url, timeout=10)
-    new_session_token = init_response.headers.get("Session-Token")
-    if new_session_token:
-        config.logger.debug(f"Received new session token: {new_session_token}")
-        config.session_token = new_session_token
-
-
 def generate_response(query):
     if not query.status.ok:
         abort(400, description="Errors found: " + ", ".join(query.status.errors))
@@ -52,11 +43,7 @@ def process_listing():
         "time_str": params.get("at") or DatetimeQuery.time_str,
         "date_str": params.get("on") or DatetimeQuery.date_str,
         "weeks_ahead_str": params.get("weeks") or DatetimeQuery.weeks_ahead_str,
-        "seats_left_str": params.get("seats_left") or DatetimeQuery.seats_left_str,
     }
-
-    # access_token expires after 45 mins, get a new token for each query
-    get_session_token()
 
     query = DatetimeQuery(status=QueryStatus(), config=config, **request_dict)
 
@@ -72,11 +59,7 @@ def process_cron():
         "job_str": params.get("job") or CronQuery.job_str,
         "count_str": params.get("count") or CronQuery.count_str,
         "skip_weeks_str": params.get("skip_weeks") or CronQuery.skip_weeks_str,
-        "seats_left_str": params.get("seats_left") or CronQuery.seats_left_str,
     }
-
-    # access_token expires after 45 mins, get a new token for each query
-    get_session_token()
 
     query = CronQuery(status=QueryStatus(), config=config, **request_dict)
 

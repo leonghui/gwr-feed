@@ -13,20 +13,12 @@ GWR_DOMAIN = "gwr.com"
 GWR_API_URL = "https://api." + GWR_DOMAIN
 GWR_BASE_URL = "https://www." + GWR_DOMAIN
 LOCATIONS_SEARCH_URI = "/rail/locations"
-JOURNEY_SEARCH_URI = "/rail/journeys/search"
-BASKET_URI = "/customer/basket"
 FAVICON_URI = "/img/favicons/favicon.ico"
 QUERY_LIMIT = 4
 X_APP_KEY = "69a273923b31ee667d3593235f91211be1a34232"
 APP_VERSION = "4.52.0"
 MOBILE_BASE_URL = "https://prod.mobileapi." + GWR_DOMAIN
 MOBILE_SEARCH_URI = "/api/v3/train/ticket/search"
-
-request_headers = {
-    "User-Agent": "",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Cache-Control": "no-cache",
-}
 
 mobile_request_headers = {
     "Accept-Encoding": "gzip",
@@ -43,16 +35,12 @@ class FeedConfig:
     session: CachedSession
     logger: Logger
     debug: bool = False
-    session_token: str = ""
     url: str = GWR_API_URL
     base_url: str = GWR_BASE_URL
     favicon_url: str = GWR_BASE_URL + FAVICON_URI
     domain: str = GWR_DOMAIN
     locations_url: str = GWR_API_URL + LOCATIONS_SEARCH_URI
-    journey_url: str = GWR_API_URL + JOURNEY_SEARCH_URI
-    basket_url: str = GWR_API_URL + BASKET_URI
     currency: str = CURRENCY_CODE
-    headers: dict = field(default_factory=lambda: request_headers)
     mobile_search_url: str = MOBILE_BASE_URL + MOBILE_SEARCH_URI
     mobile_headers: dict = field(default_factory=lambda: mobile_request_headers)
 
@@ -75,8 +63,6 @@ class _BaseQuery:
     from_id: str = ""
     to_id: str = ""
     journey: str = ""
-    seats_left_str: str = "false"
-    seats_left: bool = False
 
     def init_station_ids(self, feed_config):
         self.from_id = get_station_id(self.from_code, feed_config)
@@ -87,10 +73,6 @@ class _BaseQuery:
 
     def init_journey(self):
         self.journey = self.from_code.upper() + ">" + self.to_code.upper()
-
-    def init_seats_left(self):
-        if self.seats_left_str:
-            self.seats_left = bool(self.seats_left_str.lower() in ("true", "y", "yes"))
 
     def validate_station_code(self):
         try:
@@ -106,11 +88,6 @@ class _BaseQuery:
 
         except (TypeError, AttributeError):
             self.status.errors.append("Invalid station code(s)")
-
-    def validate_seats_left(self):
-        if self.seats_left_str:
-            if not self.seats_left_str.isalpha():
-                self.status.errors.append("seats_left should be either true or false")
 
 
 @dataclass()
@@ -155,7 +132,6 @@ class DatetimeQuery(_BaseQuery):
         self.validate_departure_time()
         self.validate_departure_date()
         self.validate_weeks_ahead()
-        self.validate_seats_left()
         self.status.refresh()
 
         if self.status.ok:
@@ -163,7 +139,6 @@ class DatetimeQuery(_BaseQuery):
             self.init_journey()
             self.init_query_dt()
             self.init_weeks_ahead()
-            self.init_seats_left()
             self.status.refresh()
 
 
@@ -209,7 +184,6 @@ class CronQuery(_BaseQuery):
         self.validate_job()
         self.validate_count()
         self.validate_skip_weeks()
-        self.validate_seats_left()
         self.status.refresh()
 
         if self.status.ok:
@@ -217,5 +191,4 @@ class CronQuery(_BaseQuery):
             self.init_journey()
             self.init_count()
             self.init_skip_weeks()
-            self.init_seats_left()
             self.status.refresh()
