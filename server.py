@@ -1,4 +1,4 @@
-from flask import Flask, abort, jsonify
+from flask import Flask, abort, jsonify, request as rq
 import requests
 from requests_cache import CachedSession
 
