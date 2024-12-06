@@ -39,7 +39,7 @@ class FeedConfig:
     journey_url: str = GWR_API_URL + JOURNEY_SEARCH_URI
     basket_url: str = GWR_API_URL + BASKET_URI
     currency: str = CURRENCY_CODE
-    headers: dict = field(default_factory=dict)
+    headers: dict = field(default_factory=lambda: request_headers)
 
 
 @dataclass

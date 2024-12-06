@@ -1,15 +1,9 @@
+from flask import Flask, abort, jsonify
 import requests
-from flask import Flask, abort, jsonify, request as rq
 from requests_cache import CachedSession
 
 from gwr_feed import get_item_listing
-from gwr_feed_data import (
-    FeedConfig,
-    QueryStatus,
-    DatetimeQuery,
-    CronQuery,
-    request_headers,
-)
+from gwr_feed_data import CronQuery, DatetimeQuery, FeedConfig, QueryStatus
 
 
 app = Flask(__name__)
@@ -27,7 +21,6 @@ config = FeedConfig(
         backend="memory",
     ),
     logger=app.logger,
-    headers=request_headers,
 )
 
 
