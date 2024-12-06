@@ -1,14 +1,14 @@
-import json
 from datetime import datetime, timedelta
+import json
+from croniter import croniter
 from flask import abort
 from requests.exceptions import JSONDecodeError, RequestException
 
-from croniter import croniter
+from gwr_feed_data import CronQuery, DatetimeQuery
 from json_feed_data import JSONFEED_VERSION_URL, JsonFeedItem, JsonFeedTopLevel
-from gwr_feed_data import DatetimeQuery, CronQuery
 
 
-def get_response_dict(url, query, body):
+def get_response_dict(url, query: DatetimeQuery, body):
     config = query.config
     logger = config.logger
     session = config.session
@@ -56,7 +56,7 @@ def get_response_dict(url, query, body):
         return None
 
 
-def get_top_level_feed(query, feed_items):
+def get_top_level_feed(query: DatetimeQuery, feed_items):
 
     title_strings = [query.config.domain, query.journey]
 
@@ -74,7 +74,7 @@ def get_top_level_feed(query, feed_items):
     return json_feed
 
 
-def generate_items(query, result_dict):
+def generate_items(query: DatetimeQuery, result_dict):
     item_title_list = [query.config.domain, query.journey]
 
     if isinstance(query, CronQuery):
