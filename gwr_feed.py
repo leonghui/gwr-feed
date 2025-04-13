@@ -1,4 +1,4 @@
-import concurrent.futures
+from multiprocessing.pool import ThreadPool
 from datetime import datetime, timedelta
 import json
 
@@ -64,7 +64,7 @@ def has_departed(message_dict: dict):
         return False
 
 
-def mobile_worker(query: DatetimeQuery, _date: datetime, result_dict: dict):
+def get_mobile_search_response(query: DatetimeQuery, _date: datetime):
     config = query.config
     logger = config.logger
     session = config.session
@@ -89,22 +89,36 @@ def mobile_worker(query: DatetimeQuery, _date: datetime, result_dict: dict):
 
     logger.debug(f"{log_header} - response is cached: {response.from_cache}")
 
-    if not response.ok:
-        if response.text:
-            error_dict = response.json().get("errors")
+    return response
+
+
+def mobile_worker(query: DatetimeQuery, _date: datetime):
+    config = query.config
+    logger = config.logger
+
+    log_header = f"{query.journey} {_date}"
+
+    search_response = get_mobile_search_response(query=query, _date=_date)
+
+    for i in range(config.retry_count):
+        if not search_response.ok:
+            logger.warning(f"{log_header} - retrying search endpoint")
+            search_response = get_mobile_search_response(query=query, _date=_date)
+
+    if not search_response.ok:
+        if search_response.text:
+            error_dict = search_response.json().get("errors")
             if (
-                response.status_code == 400
+                search_response.status_code == 400
                 and error_dict
                 and error_dict[0].get("title") == "20003"
             ):
                 logger.info(f"{log_header} - no fares found")
-                result_dict[_date] = "Not found"
-                return
+                return config.na_text
 
-        result_dict[_date] = "Error retrieving fare"
-        return
+        return config.error_text
 
-    search_dict = response.json()
+    search_dict = search_response.json()
 
     journeys = search_dict.get("data").get("outward")
 
@@ -119,8 +133,7 @@ def mobile_worker(query: DatetimeQuery, _date: datetime, result_dict: dict):
 
     # skip if no results
     if not valid_journeys:
-        result_dict[_date] = "Not found"
-        return
+        return config.na_text
 
     closest_journey = min(
         valid_journeys, key=lambda x: datetime.fromisoformat(x["departure-time"])
@@ -141,7 +154,7 @@ def mobile_worker(query: DatetimeQuery, _date: datetime, result_dict: dict):
         f"£{'{0:.2f}'.format(cheapest_fare / 100)} ({matching_fare.get("fare-name")})"
     )
 
-    result_dict[journey_dt] = fare_text
+    return fare_text
 
 
 def get_dates(query):
@@ -159,18 +172,15 @@ def get_dates(query):
 def get_pooled_results(query: DatetimeQuery, worker_type):
     dates = get_dates(query)
 
-    pool = concurrent.futures.ThreadPoolExecutor(max_workers=len(dates))
+    with ThreadPool() as pool:
+        args = [(query, _date) for _date in dates]
+        results = pool.starmap(mobile_worker, args)
 
-    result_dict = {}
+        result_dict = dict(zip(dates, results))
 
-    for _date in dates:
-        pool.submit(worker_type(query, _date, result_dict))
+        feed_items = generate_items(query, result_dict)
 
-    pool.shutdown(wait=True)
-
-    feed_items = generate_items(query, result_dict)
-
-    return feed_items
+        return feed_items
 
 
 # Default to using mobile API calls which are faster but do not return remaining seats

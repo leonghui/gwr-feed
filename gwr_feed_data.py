@@ -19,6 +19,9 @@ X_APP_KEY = "69a273923b31ee667d3593235f91211be1a34232"
 APP_VERSION = "4.52.0"
 MOBILE_BASE_URL = "https://prod.mobileapi." + GWR_DOMAIN
 MOBILE_SEARCH_URI = "/api/v3/train/ticket/search"
+RETRY_COUNT = 3
+FARE_ERROR_TEXT = "Error retrieving fare"
+FARE_NA_TEXT = "Not found"
 
 mobile_request_headers = {
     "Accept-Encoding": "gzip",
@@ -43,6 +46,9 @@ class FeedConfig:
     currency: str = CURRENCY_CODE
     mobile_search_url: str = MOBILE_BASE_URL + MOBILE_SEARCH_URI
     mobile_headers: dict = field(default_factory=lambda: mobile_request_headers)
+    retry_count: int = RETRY_COUNT
+    error_text: str = FARE_ERROR_TEXT
+    na_text: str = FARE_NA_TEXT
 
 
 @dataclass
