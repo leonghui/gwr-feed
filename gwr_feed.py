@@ -81,37 +81,28 @@ def mobile_worker(query: DatetimeQuery, _date: datetime, result_dict: dict):
         "passenger-groups": [{"adults": 1, "children": 0, "number-of-railcards": 0}],
     }
 
-    logger.debug(f"{log_header} - querying endpoint: {url}")
+    logger.debug(f"{log_header} - querying search endpoint")
 
     response = session.post(
         url=url, headers=config.mobile_headers, data=json.dumps(data)
     )
 
+    logger.debug(f"{log_header} - response is cached: {response.from_cache}")
+
     if not response.ok:
-        error_dict = response.json().get("errors")
-        if (
-            response.status_code == 400
-            and error_dict
-            and error_dict[0].get("title") == "20003"
-        ):
-            logger.info(f"{log_header} - no fares found")
-            result_dict[_date] = "Not found"
-            return
+        if response.text:
+            error_dict = response.json().get("errors")
+            if (
+                response.status_code == 400
+                and error_dict
+                and error_dict[0].get("title") == "20003"
+            ):
+                logger.info(f"{log_header} - no fares found")
+                result_dict[_date] = "Not found"
+                return
 
-        logger.error(f"{log_header} - HTTP {response.status_code}")
-
-        error_body = (
-            (
-                "Request headers:\n"
-                f"{response.request.headers}"
-                "\n\nResponse text:\n"
-                f"{response.text}"
-            )
-            if config.debug
-            else None
-        )
-
-        abort(response.status_code, error_body)
+        result_dict[_date] = "Error retrieving fare"
+        return
 
     search_dict = response.json()
 
