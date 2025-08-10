@@ -36,6 +36,9 @@ class _BaseQuery:
         if not (self.from_id and self.to_id):
             self.status.errors.append("Missing station id(s)")
 
+        if self.from_id == self.to_id:
+            self.status.errors.append("Station id(s) must be different")
+
     def init_journey(self) -> None:
         self.journey = self.from_code.upper() + ">" + self.to_code.upper()
 

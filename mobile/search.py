@@ -1,5 +1,6 @@
 from datetime import datetime
 from logging import Logger
+from typing import Optional
 
 from pydantic import BaseModel, Field, ValidationError
 from requests_cache.models import AnyResponse
@@ -32,7 +33,7 @@ class SingleFares(BaseModel):
 
 
 class Message(BaseModel):
-    message_text: str = Field(default=..., alias="message-text")
+    message_text: Optional[str] = Field(default=None, alias="message-text")
 
 
 class Journey(BaseModel):
@@ -40,7 +41,7 @@ class Journey(BaseModel):
     departure_time: datetime = Field(default=..., alias="departure-time")
     arrival_time: datetime = Field(default=..., alias="arrival-time")
     cheapest_price: int = Field(default=..., alias="cheapest-price")
-    messages: Message | dict
+    messages: Message
     changes: int
     unavailable: bool
     single_fares: SingleFares = Field(default=..., alias="single-fares")
