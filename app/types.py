@@ -1,54 +1,13 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from logging import Logger
+from typing import TypeAlias
 
 from croniter import croniter
-from requests_cache import CachedSession
 
-from gwr_location import get_station_id
+from config import FeedConfig
+from web.location import get_station_id
 
-
-CURRENCY_CODE = "£"
-GWR_DOMAIN = "gwr.com"
-GWR_API_URL = "https://api." + GWR_DOMAIN
-GWR_BASE_URL = "https://www." + GWR_DOMAIN
-LOCATIONS_SEARCH_URI = "/rail/locations"
-FAVICON_URI = "/img/favicons/favicon.ico"
 QUERY_LIMIT = 4
-X_APP_KEY = "69a273923b31ee667d3593235f91211be1a34232"
-APP_VERSION = "4.52.0"
-MOBILE_BASE_URL = "https://prod.mobileapi." + GWR_DOMAIN
-MOBILE_SEARCH_URI = "/api/v3/train/ticket/search"
-RETRY_COUNT = 3
-FARE_ERROR_TEXT = "Error retrieving fare"
-FARE_NA_TEXT = "Not found"
-
-mobile_request_headers = {
-    "Accept-Encoding": "gzip",
-    "AppVersion": APP_VERSION,
-    "Content-Type": "application/json; charset=UTF-8",
-    "User-Agent": "okhttp/4.10.0",
-    "X-App-Key": X_APP_KEY,
-    "X-App-Platform": "Android",
-}
-
-
-@dataclass()
-class FeedConfig:
-    session: CachedSession
-    logger: Logger
-    debug: bool = False
-    url: str = GWR_API_URL
-    base_url: str = GWR_BASE_URL
-    favicon_url: str = GWR_BASE_URL + FAVICON_URI
-    domain: str = GWR_DOMAIN
-    locations_url: str = GWR_API_URL + LOCATIONS_SEARCH_URI
-    currency: str = CURRENCY_CODE
-    mobile_search_url: str = MOBILE_BASE_URL + MOBILE_SEARCH_URI
-    mobile_headers: dict = field(default_factory=lambda: mobile_request_headers)
-    retry_count: int = RETRY_COUNT
-    error_text: str = FARE_ERROR_TEXT
-    na_text: str = FARE_NA_TEXT
 
 
 @dataclass
@@ -56,7 +15,7 @@ class QueryStatus:
     ok: bool = True
     errors: list[str] = field(default_factory=list)
 
-    def refresh(self):
+    def refresh(self) -> None:
         self.ok = not self.errors
 
 
@@ -66,23 +25,23 @@ class _BaseQuery:
     config: FeedConfig
     from_code: str = "BHM"
     to_code: str = "EUS"
-    from_id: str = ""
-    to_id: str = ""
+    from_id: str | None = ""
+    to_id: str | None = ""
     journey: str = ""
 
-    def init_station_ids(self, feed_config):
-        self.from_id = get_station_id(self.from_code, feed_config)
-        self.to_id = get_station_id(self.to_code, feed_config)
+    def init_station_ids(self, feed_config: FeedConfig) -> None:
+        self.from_id = get_station_id(station_code=self.from_code, config=feed_config)
+        self.to_id = get_station_id(station_code=self.to_code, config=feed_config)
 
         if not (self.from_id and self.to_id):
             self.status.errors.append("Missing station id(s)")
 
-    def init_journey(self):
+    def init_journey(self) -> None:
         self.journey = self.from_code.upper() + ">" + self.to_code.upper()
 
-    def validate_station_code(self):
+    def validate_station_code(self) -> None:
         try:
-            station_code_rules = [
+            station_code_rules: list[bool] = [
                 self.from_code.isalpha(),
                 len(self.from_code) == 3,
                 self.to_code.isalpha(),
@@ -99,41 +58,47 @@ class _BaseQuery:
 @dataclass()
 class DatetimeQuery(_BaseQuery):
 
-    time_str: str = datetime.now().strftime("%H%M")
-    date_str: str = datetime.now().strftime("%Y%m%d")
+    time_str: str = datetime.now().strftime(format="%H%M")
+    date_str: str = datetime.now().strftime(format="%Y%m%d")
     query_dt: datetime = datetime.now()
     weeks_ahead_str: str = "0"
     weeks_ahead: int = 0
 
-    def init_query_dt(self):
+    def init_query_dt(self) -> None:
         self.query_dt = datetime.strptime(
             self.date_str + " " + self.time_str, "%Y%m%d %H%M"
         )
 
-    def init_weeks_ahead(self):
+    def init_weeks_ahead(self) -> None:
         if self.weeks_ahead_str:
             self.weeks_ahead = int(self.weeks_ahead_str)
 
-    def validate_departure_time(self):
+    def validate_departure_time(self) -> None:
         if self.time_str:
-            time_rules = [self.time_str.isnumeric(), len(self.time_str) == 4]
+            time_rules: list[bool] = [
+                self.time_str.isnumeric(),
+                len(self.time_str) == 4,
+            ]
 
             if not all(time_rules):
                 self.status.errors.append("Invalid departure time")
 
-    def validate_departure_date(self):
+    def validate_departure_date(self) -> None:
         if self.date_str:
-            date_rules = [self.date_str.isnumeric(), len(self.date_str) == 8]
+            date_rules: list[bool] = [
+                self.date_str.isnumeric(),
+                len(self.date_str) == 8,
+            ]
 
             if not all(date_rules):
                 self.status.errors.append("Invalid departure date")
 
-    def validate_weeks_ahead(self):
+    def validate_weeks_ahead(self) -> None:
         if self.weeks_ahead_str:
             if not self.weeks_ahead_str.isnumeric():
                 self.status.errors.append("Invalid week count")
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.validate_station_code()
         self.validate_departure_time()
         self.validate_departure_date()
@@ -141,7 +106,7 @@ class DatetimeQuery(_BaseQuery):
         self.status.refresh()
 
         if self.status.ok:
-            self.init_station_ids(self.config)
+            self.init_station_ids(feed_config=self.config)
             self.init_journey()
             self.init_query_dt()
             self.init_weeks_ahead()
@@ -153,24 +118,24 @@ class CronQuery(_BaseQuery):
 
     job_str: str = "0 8 * * 1-5"  #   0800 every weekday
     count_str: str = str(QUERY_LIMIT)
-    count: int = QUERY_LIMIT
     skip_weeks_str: str = "0"
+    count: int = 0
     skip_weeks: int = 0
 
-    def init_count(self):
+    def init_count(self) -> None:
         if self.count_str:
             self.count = int(self.count_str)
 
-    def init_skip_weeks(self):
+    def init_skip_weeks(self) -> None:
         if self.skip_weeks_str:
             self.skip_weeks = int(self.skip_weeks_str)
 
-    def validate_job(self):
+    def validate_job(self) -> None:
         if self.job_str:
-            if not croniter.is_valid(self.job_str):
+            if not croniter.is_valid(expression=self.job_str):
                 self.status.errors.append("Invalid cron expression")
 
-    def validate_count(self):
+    def validate_count(self) -> None:
         if self.count_str:
             count_rules = [
                 self.count_str.isnumeric,
@@ -180,12 +145,12 @@ class CronQuery(_BaseQuery):
             if not all(count_rules):
                 self.status.errors.append("Invalid count")
 
-    def validate_skip_weeks(self):
+    def validate_skip_weeks(self) -> None:
         if self.skip_weeks_str:
             if not self.skip_weeks_str.isnumeric():
                 self.status.errors.append("Invalid skipped week count")
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.validate_station_code()
         self.validate_job()
         self.validate_count()
@@ -193,8 +158,11 @@ class CronQuery(_BaseQuery):
         self.status.refresh()
 
         if self.status.ok:
-            self.init_station_ids(self.config)
+            self.init_station_ids(feed_config=self.config)
             self.init_journey()
             self.init_count()
             self.init_skip_weeks()
             self.status.refresh()
+
+
+SupportedQuery: TypeAlias = CronQuery | DatetimeQuery
