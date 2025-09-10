@@ -4,7 +4,6 @@ from logging import Logger
 from requests_cache import CachedSession
 
 
-CURRENCY_CODE = "£"
 GWR_DOMAIN = "gwr.com"
 GWR_API_URL = "https://api." + GWR_DOMAIN
 GWR_BASE_URL = "https://www." + GWR_DOMAIN
@@ -14,8 +13,6 @@ X_APP_KEY = "69a273923b31ee667d3593235f91211be1a34232"
 APP_VERSION = "4.58.0"
 MOBILE_BASE_URL = "https://prod.mobileapi." + GWR_DOMAIN
 MOBILE_SEARCH_URI = "/api/v3/train/ticket/search"
-RETRY_COUNT = 3
-FARE_ERROR_TEXT = "Error retrieving fare"
 FARE_NA_TEXT = "Not found"
 
 mobile_request_headers: dict[str, str] = {
@@ -33,14 +30,10 @@ class FeedConfig:
     session: CachedSession
     logger: Logger
     debug: bool = False
-    url: str = GWR_API_URL
     base_url: str = GWR_BASE_URL
     favicon_url: str = GWR_BASE_URL + FAVICON_URI
     domain: str = GWR_DOMAIN
     locations_url: str = GWR_API_URL + LOCATIONS_SEARCH_URI
-    currency: str = CURRENCY_CODE
     mobile_search_url: str = MOBILE_BASE_URL + MOBILE_SEARCH_URI
     mobile_headers: dict = field(default_factory=lambda: mobile_request_headers)
-    retry_count: int = RETRY_COUNT
-    error_text: str = FARE_ERROR_TEXT
     na_text: str = FARE_NA_TEXT
