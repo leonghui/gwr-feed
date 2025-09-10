@@ -1,5 +1,4 @@
 from flask import Flask, abort, jsonify, request as rq
-from flask.app import Flask
 from flask.wrappers import Response
 from requests_cache import CachedSession
 from werkzeug.datastructures.structures import MultiDict

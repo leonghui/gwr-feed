@@ -60,7 +60,6 @@ class _BaseQuery:
 
 @dataclass()
 class DatetimeQuery(_BaseQuery):
-
     time_str: str = datetime.now().strftime(format="%H%M")
     date_str: str = datetime.now().strftime(format="%Y%m%d")
     query_dt: datetime = datetime.now()
@@ -118,7 +117,6 @@ class DatetimeQuery(_BaseQuery):
 
 @dataclass()
 class CronQuery(_BaseQuery):
-
     job_str: str = "0 8 * * 1-5"  #   0800 every weekday
     count_str: str = str(QUERY_LIMIT)
     skip_weeks_str: str = "0"

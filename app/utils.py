@@ -62,7 +62,6 @@ def _format_fare_text(price_pennies: int, fare_name: str) -> str:
 def extract_fare_text(
     config: FeedConfig, response: JourneyResponse, query_date: datetime
 ) -> str | None:
-
     journeys: list[Journey] = response.data.outward
 
     closest_journey: Journey | None = _find_closest_journey(journeys, query_date)

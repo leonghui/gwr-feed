@@ -8,7 +8,6 @@ from .types import JSONFEED_VERSION_URL, JsonFeedItem, JsonFeedTopLevel
 def get_top_level_feed(
     query: SupportedQuery, feed_items: list[JsonFeedItem]
 ) -> JsonFeedTopLevel:
-
     title_strings: list[str] = [query.config.domain, query.journey]
 
     if isinstance(query, CronQuery):
