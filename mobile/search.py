@@ -8,7 +8,7 @@ from requests_cache.session import CachedSession
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from app.types import SupportedQuery
-from config import FeedConfig
+from config import config
 
 
 class ErrorItem(BaseModel):
@@ -62,7 +62,6 @@ class JourneyResponse(BaseModel):
 def get_mobile_search_response(
     query: SupportedQuery, query_date: datetime
 ) -> JourneyResponse | ErrorResponse | None:
-    config: FeedConfig = query.config
     logger: Logger = config.logger
     session: CachedSession = config.session
     url: str = config.mobile_search_url

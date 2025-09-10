@@ -2,7 +2,7 @@ from pydantic import BaseModel, ValidationError
 from requests_cache.models import AnyResponse
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from config import FeedConfig
+from config import config
 
 
 class Station(BaseModel):
@@ -24,7 +24,7 @@ class StationResponse(BaseModel):
     stop=stop_after_attempt(max_attempt_number=3),
     wait=wait_exponential(multiplier=1, min=4, max=10),
 )
-def get_station_id(station_code: str, config: FeedConfig) -> str | None:
+def get_station_id(station_code: str) -> str | None:
     resp: AnyResponse = config.session.get(config.locations_url, expire_after=-1)
     resp.raise_for_status()
 

@@ -1,30 +1,15 @@
-from flask import Flask, abort, jsonify, request as rq
+from flask import Flask, abort, jsonify
+from flask import request as rq
 from flask.wrappers import Response
-from requests_cache import CachedSession
 from werkzeug.datastructures.structures import MultiDict
 
 from app.app import get_item_listing
 from app.types import CronQuery, DatetimeQuery, QueryStatus, SupportedQuery
-from config import FeedConfig
+from config import config
 from json_feed.types import JsonFeedTopLevel
-
 
 app: Flask = Flask(import_name=__name__)
 app.config.update({"JSONIFY_MIMETYPE": "application/feed+json"})
-
-# app.debug = True
-
-config: FeedConfig = FeedConfig(
-    debug=app.debug,
-    session=CachedSession(
-        allowable_methods=("GET", "POST"),
-        stale_if_error=True,
-        cache_control=False,
-        expire_after=300,
-        backend="memory",
-    ),
-    logger=app.logger,
-)
 
 
 def generate_response(query: SupportedQuery) -> Response:
@@ -50,7 +35,7 @@ def process_listing() -> Response:
     }
 
     query: DatetimeQuery = DatetimeQuery(
-        status=QueryStatus(), config=config, **request_dict
+        status=QueryStatus(), **request_dict
     )
 
     return generate_response(query)
@@ -67,7 +52,7 @@ def process_cron() -> Response:
         "skip_weeks_str": params.get("skip_weeks") or CronQuery.skip_weeks_str,
     }
 
-    query: CronQuery = CronQuery(status=QueryStatus(), config=config, **request_dict)
+    query: CronQuery = CronQuery(status=QueryStatus(), **request_dict)
 
     return generate_response(query)
 

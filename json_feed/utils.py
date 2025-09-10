@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from app.types import CronQuery, SupportedQuery
+from config import config
 
 from .types import JSONFEED_VERSION_URL, JsonFeedItem, JsonFeedTopLevel
 
@@ -8,13 +9,13 @@ from .types import JSONFEED_VERSION_URL, JsonFeedItem, JsonFeedTopLevel
 def get_top_level_feed(
     query: SupportedQuery, feed_items: list[JsonFeedItem]
 ) -> JsonFeedTopLevel:
-    title_strings: list[str] = [query.config.domain, query.journey]
+    title_strings: list[str] = [config.domain, query.journey]
 
     if isinstance(query, CronQuery):
         title_strings.append(query.job_str)
 
-    base_url: str = query.config.base_url
-    favicon_url: str = query.config.favicon_url
+    base_url: str = config.base_url
+    favicon_url: str = config.favicon_url
 
     json_feed: JsonFeedTopLevel = JsonFeedTopLevel(
         version=JSONFEED_VERSION_URL,
@@ -30,7 +31,7 @@ def get_top_level_feed(
 def generate_items(
     query: SupportedQuery, result_dict: dict[datetime, str | None]
 ) -> list[JsonFeedItem]:
-    title_list: list[str] = [query.config.domain, query.journey]
+    title_list: list[str] = [config.domain, query.journey]
 
     feed_items: list[JsonFeedItem] = []
 
@@ -44,7 +45,7 @@ def generate_items(
             datetime.now().replace(microsecond=0).isoformat(sep="T")
         )
 
-        item_link_url: str = query.config.base_url
+        item_link_url: str = config.base_url
 
         feed_item: JsonFeedItem = JsonFeedItem(
             id=published_timestamp,

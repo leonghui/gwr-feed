@@ -2,7 +2,7 @@ from datetime import datetime
 from multiprocessing.pool import ThreadPool
 
 from app.utils import extract_fare_text, get_dates
-from config import FeedConfig
+from config import config
 from json_feed.types import JsonFeedItem, JsonFeedTopLevel
 from json_feed.utils import generate_items, get_top_level_feed
 from mobile.search import ErrorResponse, JourneyResponse, get_mobile_search_response
@@ -11,8 +11,6 @@ from .types import SupportedQuery
 
 
 def _mobile_worker(query: SupportedQuery, query_date: datetime) -> str | None:
-    config: FeedConfig = query.config
-
     response: JourneyResponse | ErrorResponse | None = get_mobile_search_response(
         query, query_date
     )

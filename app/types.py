@@ -4,7 +4,6 @@ from typing import TypeAlias
 
 from croniter import croniter
 
-from config import FeedConfig
 from web.location import get_station_id
 
 QUERY_LIMIT = 4
@@ -22,16 +21,15 @@ class QueryStatus:
 @dataclass(kw_only=True)
 class _BaseQuery:
     status: QueryStatus
-    config: FeedConfig
     from_code: str = "BHM"
     to_code: str = "EUS"
     from_id: str | None = ""
     to_id: str | None = ""
     journey: str = ""
 
-    def init_station_ids(self, feed_config: FeedConfig) -> None:
-        self.from_id = get_station_id(station_code=self.from_code, config=feed_config)
-        self.to_id = get_station_id(station_code=self.to_code, config=feed_config)
+    def init_station_ids(self) -> None:
+        self.from_id = get_station_id(station_code=self.from_code)
+        self.to_id = get_station_id(station_code=self.to_code)
 
         if not (self.from_id and self.to_id):
             self.status.errors.append("Missing station id(s)")
@@ -108,7 +106,7 @@ class DatetimeQuery(_BaseQuery):
         self.status.refresh()
 
         if self.status.ok:
-            self.init_station_ids(feed_config=self.config)
+            self.init_station_ids()
             self.init_journey()
             self.init_query_dt()
             self.init_weeks_ahead()
@@ -159,7 +157,7 @@ class CronQuery(_BaseQuery):
         self.status.refresh()
 
         if self.status.ok:
-            self.init_station_ids(feed_config=self.config)
+            self.init_station_ids()
             self.init_journey()
             self.init_count()
             self.init_skip_weeks()

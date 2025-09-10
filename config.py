@@ -37,3 +37,15 @@ class FeedConfig:
     mobile_search_url: str = MOBILE_BASE_URL + MOBILE_SEARCH_URI
     mobile_headers: dict = field(default_factory=lambda: mobile_request_headers)
     na_text: str = FARE_NA_TEXT
+
+
+config: FeedConfig = FeedConfig(
+    session=CachedSession(
+        allowable_methods=("GET", "POST"),
+        stale_if_error=True,
+        cache_control=False,
+        expire_after=300,
+        backend="memory",
+    ),
+    logger=Logger("gwr-feed"),
+)
