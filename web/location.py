@@ -35,7 +35,7 @@ def get_station_id(station_code: str) -> str | None:
         return None
 
     for station in payload.data:
-        if station.code == station_code.upper():
+        if station.code == station_code:
             return station.nlc
 
     config.logger.error(msg=f"No matching station for code: {station_code}")

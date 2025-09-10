@@ -1,10 +1,9 @@
-from flask import Flask, abort, jsonify
-from flask import request as rq
+from flask import Flask, jsonify
 from flask.wrappers import Response
-from werkzeug.datastructures.structures import MultiDict
+from flask_pydantic import validate
 
 from app.app import get_item_listing
-from app.types import CronQuery, DatetimeQuery, QueryStatus, SupportedQuery
+from app.types import BaseQueryModel, CronQueryModel, DatetimeQueryModel
 from config import config
 from json_feed.types import JsonFeedTopLevel
 
@@ -12,48 +11,25 @@ app: Flask = Flask(import_name=__name__)
 app.config.update({"JSONIFY_MIMETYPE": "application/feed+json"})
 
 
-def generate_response(query: SupportedQuery) -> Response:
-    if not query.status.ok:
-        abort(code=400, description="Errors found: " + ", ".join(query.status.errors))
-
+def generate_response(query: BaseQueryModel) -> Response:
     config.logger.debug(msg=query)  # log values
 
     output: JsonFeedTopLevel = get_item_listing(query)
     return jsonify(output)
 
 
+# handle a single journey
 @app.route(rule="/", methods=["GET"])
 @app.route(rule="/journey", methods=["GET"])
-def process_listing() -> Response:
-    params: MultiDict[str, str] = rq.args
-    request_dict: dict[str, str] = {
-        "from_code": params.get("from") or DatetimeQuery.from_code,
-        "to_code": params.get("to") or DatetimeQuery.to_code,
-        "time_str": params.get("at") or DatetimeQuery.time_str,
-        "date_str": params.get("on") or DatetimeQuery.date_str,
-        "weeks_ahead_str": params.get("weeks") or DatetimeQuery.weeks_ahead_str,
-    }
-
-    query: DatetimeQuery = DatetimeQuery(
-        status=QueryStatus(), **request_dict
-    )
-
+@validate(response_by_alias=True)
+def process_listing(query: DatetimeQueryModel) -> Response:
     return generate_response(query)
 
 
+# handle repeated journeys using a cron schedule expression
 @app.route(rule="/cron", methods=["GET"])
-def process_cron() -> Response:
-    params: MultiDict[str, str] = rq.args
-    request_dict: dict[str, str] = {
-        "from_code": params.get("from") or CronQuery.from_code,
-        "to_code": params.get("to") or CronQuery.to_code,
-        "job_str": params.get("job") or CronQuery.job_str,
-        "count_str": params.get("count") or CronQuery.count_str,
-        "skip_weeks_str": params.get("skip_weeks") or CronQuery.skip_weeks_str,
-    }
-
-    query: CronQuery = CronQuery(status=QueryStatus(), **request_dict)
-
+@validate(response_by_alias=True)
+def process_cron(query: CronQueryModel) -> Response:
     return generate_response(query)
 
 

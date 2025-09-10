@@ -14,6 +14,7 @@ APP_VERSION = "4.58.0"
 MOBILE_BASE_URL = "https://prod.mobileapi." + GWR_DOMAIN
 MOBILE_SEARCH_URI = "/api/v3/train/ticket/search"
 FARE_NA_TEXT = "Not found"
+RESULTS_LIMIT = 7
 
 mobile_request_headers: dict[str, str] = {
     "Accept-Encoding": "gzip",

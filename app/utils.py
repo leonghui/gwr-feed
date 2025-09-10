@@ -2,8 +2,8 @@ from datetime import datetime, timedelta
 
 from croniter.croniter import croniter
 
-from app.types import CronQuery, DatetimeQuery, SupportedQuery
-from config import FeedConfig
+from app.types import BaseQueryModel, CronQueryModel, DatetimeQueryModel
+from config import RESULTS_LIMIT, FeedConfig
 from mobile.search import Journey, JourneyResponse, Message, SingleFare
 
 
@@ -38,18 +38,20 @@ def _find_matching_fare(closest_journey: Journey) -> SingleFare | None:
     )
 
 
-def get_dates(query: SupportedQuery) -> list[datetime]:
-    if isinstance(query, DatetimeQuery):
-        return [
-            query.query_dt + timedelta(days=(7 * x))
-            for x in range(query.weeks_ahead + 1)
-        ]
-    elif isinstance(query, CronQuery):
+def get_dates(query: BaseQueryModel) -> list[datetime]:
+    if isinstance(query, DatetimeQueryModel):
+        return (
+            [query.dt + timedelta(days=(7 * x)) for x in range(query.weeks_ahead + 1)]
+            if query.weeks_ahead
+            else [query.dt]
+        )
+
+    elif isinstance(query, CronQueryModel):
         start_time: datetime = datetime.now() + timedelta(days=(7 * query.skip_weeks))
         cron_iter: croniter[float] = croniter(
-            expr_format=query.job_str, start_time=start_time
+            expr_format=query.job, start_time=start_time
         )
-        return [cron_iter.get_next(datetime) for _ in range(0, query.count)]
+        return [cron_iter.get_next(datetime) for _ in range(0, RESULTS_LIMIT)]
     else:
         # unsupported query type
         raise RuntimeError("Unsupported query type")

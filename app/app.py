@@ -7,10 +7,10 @@ from json_feed.types import JsonFeedItem, JsonFeedTopLevel
 from json_feed.utils import generate_items, get_top_level_feed
 from mobile.search import ErrorResponse, JourneyResponse, get_mobile_search_response
 
-from .types import SupportedQuery
+from .types import BaseQueryModel
 
 
-def _mobile_worker(query: SupportedQuery, query_date: datetime) -> str | None:
+def _mobile_worker(query: BaseQueryModel, query_date: datetime) -> str | None:
     response: JourneyResponse | ErrorResponse | None = get_mobile_search_response(
         query, query_date
     )
@@ -21,7 +21,7 @@ def _mobile_worker(query: SupportedQuery, query_date: datetime) -> str | None:
     return extract_fare_text(config, response, query_date)
 
 
-def _fetch_pooled_feed_items(query: SupportedQuery) -> list[JsonFeedItem]:
+def _fetch_pooled_feed_items(query: BaseQueryModel) -> list[JsonFeedItem]:
     dates: list[datetime] = get_dates(query)
 
     pool_size: int = len(dates)
@@ -37,7 +37,7 @@ def _fetch_pooled_feed_items(query: SupportedQuery) -> list[JsonFeedItem]:
 
 
 # Default to using mobile API calls which are faster but do not return remaining seats
-def get_item_listing(query: SupportedQuery) -> JsonFeedTopLevel:
+def get_item_listing(query: BaseQueryModel) -> JsonFeedTopLevel:
     feed_items: list[JsonFeedItem] = _fetch_pooled_feed_items(query)
 
     return get_top_level_feed(query, feed_items)
