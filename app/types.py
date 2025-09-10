@@ -47,20 +47,26 @@ class BaseQueryModel(BaseModel):
 
 class DatetimeQueryModel(BaseQueryModel):
     at: time = datetime.now().time()
-    on: date = datetime.now().date()
+    on: date = date.today()
     weeks_ahead: PositiveInt = 0
 
     @computed_field
     @property
     def dt(self) -> datetime:
-        combined_dt: datetime = datetime.combine(date=self.on, time=self.at)
+        now: datetime = datetime.now()
+        given: datetime = datetime.combine(date=self.on, time=self.at)
+        later: datetime = datetime.combine(date=date.today(), time=self.at)
+        tomorrow: datetime = later + timedelta(days=1)
 
-        if combined_dt < datetime.now():
-            return datetime.combine(
-                date=datetime.today() + timedelta(days=1), time=self.at
-            )
+        if given >= now:
+            return given
+
+        # given is in the past; prefer today's target if it's still ahead, otherwise tomorrow
+        if later > now:
+            return later
+
         else:
-            return combined_dt
+            return tomorrow
 
     @model_validator(mode="after")
     def check_future_dt(self) -> Self:
